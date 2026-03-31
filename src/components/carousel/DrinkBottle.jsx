@@ -5,6 +5,7 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
   return (
     <div className="relative flex justify-center items-center w-full h-[500px] md:h-[650px] overflow-visible perspective-[1000px]">
       
+      {/* 1. Background Glow with Optimization */}
       <motion.div
         key={`glow-${id}`}
         initial={{ opacity: 0, scale: 0 }}
@@ -17,10 +18,12 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
-        className="absolute w-72 h-72 md:w-[450px] md:h-[450px] bg-white/20 blur-[100px] rounded-full z-0"
+        style={{ translateZ: 0 }}
+        className="absolute w-72 h-72 md:w-[450px] md:h-[450px] bg-white/20 blur-[100px] rounded-full z-0 will-change-[opacity,transform]"
       />
 
       <AnimatePresence mode="wait">
+        {/* Entrance & Exit Animation Wrapper */}
         <motion.div 
           key={id} 
           initial={{ opacity: 0, y: 300, scale: 0.2, rotateY: 180, rotateZ: 45 }}
@@ -29,11 +32,13 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
           transition={{ 
             type: "spring", 
             stiffness: 70, 
-            damping: 12,
+            damping: 15,
             duration: 0.8
           }}
-          className="relative z-10 flex justify-center items-center w-full h-full"
+          style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
+          className="relative z-10 flex justify-center items-center w-full h-full will-change-transform"
         >
+          {/* 2. Floating Bottle with GPU Acceleration */}
           <motion.img
             src={`/drinks/${bottleImage}`}
             alt={title}
@@ -47,12 +52,14 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
               repeat: Infinity, 
               ease: "easeInOut" 
             }}
-            className="relative z-50 h-[85%] w-auto object-contain drop-shadow-[0_40px_50px_rgba(0,0,0,0.5)] cursor-pointer"
+            style={{ translateZ: 0 }}
+            className="relative z-50 h-[85%] w-auto object-contain drop-shadow-[0_40px_50px_rgba(0,0,0,0.5)] cursor-pointer will-change-transform"
             whileHover={{ scale: 1.05 }} 
           />
         </motion.div>
       </AnimatePresence>
 
+      {/* 3. Dynamic Shadow with Optimization */}
       <motion.div 
         key={`shadow-${id}`}
         initial={{ opacity: 0, scale: 0 }}
@@ -65,7 +72,8 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
-        className="absolute bottom-5 w-52 h-8 bg-black/40 blur-2xl rounded-[100%] z-5" 
+        style={{ translateZ: 0 }}
+        className="absolute bottom-5 w-52 h-8 bg-black/40 blur-2xl rounded-[100%] z-5 will-change-[opacity,transform]" 
       />
     </div>
   );

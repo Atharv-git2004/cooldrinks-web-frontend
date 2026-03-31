@@ -30,15 +30,17 @@ const HeroCarousel = ({ onColorChange }) => {
   return (
     <section className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-hidden py-10 md:py-0">
       
+      {/* Background Large Text with GPU Acceleration */}
       <div className="absolute inset-0 flex items-center justify-center z-0 overflow-hidden pointer-events-none">
-        <AnimatePresence mode="wait" custom={direction}>
+        <AnimatePresence mode="popLayout" custom={direction}>
           <motion.h2
             key={current.title}
             initial={{ opacity: 0, scale: 0.8, x: direction > 0 ? 200 : -200 }}
             animate={{ opacity: 0.05, scale: 1.1, x: 0 }}
             exit={{ opacity: 0, scale: 1.2, x: direction > 0 ? -200 : 200 }}
             transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-            className="text-[35vw] md:text-[28vw] font-black text-white uppercase leading-none"
+            style={{ translateZ: 0 }} // Force Hardware Acceleration
+            className="text-[35vw] md:text-[28vw] font-black text-white uppercase leading-none will-change-transform"
           >
             {current.title.split(' ')[0]}
           </motion.h2>
@@ -47,6 +49,7 @@ const HeroCarousel = ({ onColorChange }) => {
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 items-center z-20 pt-16 md:pt-20 w-full relative">
         
+        {/* Left Side Content */}
         <div className="text-white space-y-4 md:space-y-6 order-2 lg:order-1 relative z-30 flex flex-col items-center lg:items-start text-center lg:text-left mt-8 lg:mt-0">
           <AnimatePresence mode="wait">
             <motion.div
@@ -55,7 +58,7 @@ const HeroCarousel = ({ onColorChange }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className="flex flex-col items-center lg:items-start"
+              className="flex flex-col items-center lg:items-start will-change-transform"
             >
               <motion.span 
                 initial={{ opacity: 0 }}
@@ -88,6 +91,7 @@ const HeroCarousel = ({ onColorChange }) => {
           </AnimatePresence>
         </div>
 
+        {/* Right Side Bottle */}
         <div className="order-1 lg:order-2 flex justify-center items-center relative min-h-[350px] md:min-h-[550px] z-40 pointer-events-none scale-90 md:scale-100">
           <DrinkBottle 
             bottleImage={current.bottleImage} 
@@ -97,6 +101,7 @@ const HeroCarousel = ({ onColorChange }) => {
         </div>
       </div>
 
+      {/* Navigation Controls */}
       <div className="absolute bottom-6 md:bottom-10 left-0 w-full px-6 lg:px-16 flex items-center justify-center lg:justify-between z-50">
         
         <div className="hidden lg:flex gap-8 text-white/20 font-black text-[9px] tracking-[0.3em] uppercase">
