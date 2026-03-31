@@ -5,7 +5,6 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
   return (
     <div className="relative flex justify-center items-center w-full h-[500px] md:h-[650px] overflow-visible perspective-[1000px]">
       
-      {/* 1. Breathing Background Glow */}
       <motion.div
         key={`glow-${id}`}
         initial={{ opacity: 0, scale: 0 }}
@@ -22,7 +21,6 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
       />
 
       <AnimatePresence mode="wait">
-        {/* Entrance & Exit Animation Wrapper (3D Spin & Spring Drop) */}
         <motion.div 
           key={id} 
           initial={{ opacity: 0, y: 300, scale: 0.2, rotateY: 180, rotateZ: 45 }}
@@ -36,10 +34,10 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
           }}
           className="relative z-10 flex justify-center items-center w-full h-full"
         >
-          {/* 2. Continuous Floating Animation (Zero Gravity Effect) */}
           <motion.img
-            src={`/src/assets/drinks/${bottleImage}`}
+            src={`/drinks/${bottleImage}`}
             alt={title}
+            loading="eager"
             animate={{ 
               y: [-15, 15, -15], 
               rotateZ: [-2, 2, -2] 
@@ -50,12 +48,11 @@ const DrinkBottle = ({ bottleImage, title, id }) => {
               ease: "easeInOut" 
             }}
             className="relative z-50 h-[85%] w-auto object-contain drop-shadow-[0_40px_50px_rgba(0,0,0,0.5)] cursor-pointer"
-            whileHover={{ scale: 1.05, dropShadow: "0 50px 60px rgba(0,0,0,0.6)" }} 
+            whileHover={{ scale: 1.05 }} 
           />
         </motion.div>
       </AnimatePresence>
 
-      {/* 3. Dynamic Bottom Shadow (Reacts to the Floating) */}
       <motion.div 
         key={`shadow-${id}`}
         initial={{ opacity: 0, scale: 0 }}

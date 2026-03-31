@@ -92,7 +92,6 @@ const HeroCarousel = ({ onColorChange }) => {
           <DrinkBottle 
             bottleImage={current.bottleImage} 
             title={current.title} 
-            elements={current.elements} 
             id={current.id} 
           />
         </div>

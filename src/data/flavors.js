@@ -85,7 +85,7 @@ export const flavorsData = [
     title: "Sting",
     subtitle: "Ultimate Energy Kick",
     description: "Electrify your senses with the sharp and refreshing taste of Sting.",
-    bgColor: "#E60000", // Sting Red
+    bgColor: "#E60000",
     accentColor: "#FFD700",
     bottleImage: "sting.jpg"
   },
@@ -94,7 +94,7 @@ export const flavorsData = [
     title: "Welchs",
     subtitle: "Fruit Sensation",
     description: "Experience the rich, bold flavor of real fruit in every sparkling sip.",
-    bgColor: "#4B0082", // Grape Purple
+    bgColor: "#4B0082",
     accentColor: "#EE82EE",
     bottleImage: "welchs.jpg"
   }

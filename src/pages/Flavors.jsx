@@ -127,7 +127,7 @@ const Flavors = () => {
               <motion.img 
                 whileHover={{ rotate: 12, scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                src={`/src/assets/drinks/${item.bottleImage}`} 
+                src={`/drinks/${item.bottleImage}`} 
                 alt={item.title} 
                 className="h-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] z-10" 
               />
