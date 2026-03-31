@@ -1,0 +1,24 @@
+import React from 'react';
+import Home from './pages/Home';
+import { motion, AnimatePresence } from 'framer-motion';
+
+function App() {
+  return (
+    <div className="bg-[#0a0a0a] min-h-screen selection:bg-cyan-500 selection:text-black">
+      {/* AnimatePresence ഉപയോഗിക്കുന്നത് കൊണ്ട് പേജ് ലോഡ് ആകുമ്പോൾ 
+        വളരെ സ്മൂത്ത് ആയ ഒരു എൻട്രി എഫക്റ്റ് കിട്ടും 
+      */}
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <Home />
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default App;
