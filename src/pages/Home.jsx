@@ -12,15 +12,14 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.5 }}
         className="relative min-h-[100dvh] w-full bg-[#050505] text-white overflow-hidden flex flex-col justify-between select-none"
       >
-        {/* Dynamic Ambient Background Glow - High-End Aesthetic */}
+        {/* OPTIMIZATION: Removed expensive blur(100px) and mix-blend-screen. Added transform-gpu */}
         <div
-          className="absolute inset-0 pointer-events-none transition-all duration-1000 ease-out z-0 opacity-30 mix-blend-screen"
+          className="absolute inset-0 pointer-events-none transition-colors duration-1000 ease-out z-0 opacity-20 transform-gpu"
           style={{
-            background: `radial-gradient(circle at 50% 50%, ${activeThemeColor} 0%, transparent 65%)`,
-            filter: "blur(100px)",
+            background: `radial-gradient(circle at 50% 50%, ${activeThemeColor} 0%, transparent 70%)`,
           }}
         />
 
@@ -48,7 +47,8 @@ const Home = () => {
           className="w-full z-10 pb-6 md:pb-8 flex-col items-center gap-3 pointer-events-none hidden md:flex"
         >
           <span className="text-[9px] uppercase tracking-[0.5em] text-white/30 font-black">Scroll to Explore</span>
-          <div className="w-[1px] h-14 bg-white/10 relative overflow-hidden rounded-full">
+          {/* OPTIMIZATION: Added transform-gpu to prevent layout thrashing */}
+          <div className="w-[1px] h-14 bg-white/10 relative overflow-hidden rounded-full transform-gpu">
             <motion.div
               animate={{
                 y: [-56, 56],
@@ -56,9 +56,9 @@ const Home = () => {
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut",
+                ease: "linear", // Changed to linear for a smoother infinite loop
               }}
-              className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-white/70 to-transparent"
+              className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-white/50 to-transparent will-change-transform"
             />
           </div>
         </motion.div>
