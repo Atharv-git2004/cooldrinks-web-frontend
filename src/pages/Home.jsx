@@ -12,30 +12,58 @@ const Home = () => {
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="relative min-h-[100dvh] w-full transition-colors duration-1000 overflow-x-hidden flex flex-col items-center justify-center"
-        style={{ backgroundColor: activeThemeColor }}
+        transition={{ duration: 0.6 }}
+        className="relative min-h-[100dvh] w-full bg-[#050505] text-white overflow-x-hidden flex flex-col justify-between select-none"
       >
-        <Navbar />
+        {/* Dynamic Ambient Background Glow - High-End Aesthetic */}
+        <div 
+          className="absolute inset-0 pointer-events-none transition-all duration-1000 ease-out z-0 opacity-30 mix-blend-screen"
+          style={{
+            background: `radial-gradient(circle at 50% 50%, ${activeThemeColor} 0%, transparent 65%)`,
+            filter: 'blur(100px)'
+          }}
+        />
+
+        {/* Premium Tech Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:5rem_5rem] pointer-events-none z-0" />
+
+        {/* Fixed Header Wrapper to manage layouts safely */}
+        <div className="w-full z-50">
+          <Navbar />
+        </div>
         
-        <div className="w-full flex-grow flex items-center justify-center px-4 sm:px-8 lg:px-16 pt-[80px] md:pt-0">
-          <HeroCarousel onColorChange={setActiveThemeColor} />
+        {/* Main Immersive Content Area - Fully Fluid & Responsive */}
+        <div className="w-full flex-grow flex items-center justify-center px-4 sm:px-8 lg:px-16 xl:px-24 py-12 md:py-20 z-10 mt-[70px] md:mt-0">
+          <div className="w-full max-w-7xl mx-auto flex items-center justify-center">
+            <HeroCarousel onColorChange={setActiveThemeColor} />
+          </div>
         </div>
 
+        {/* Cinematic Kinetic Scroll Indicator - Responsive Viewports */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-2 pointer-events-none"
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="w-full z-10 pb-6 md:pb-8 flex flex-col items-center gap-3 pointer-events-none hidden sm:flex"
         >
-          <span className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-white/40 font-black">
+          <span className="text-[9px] uppercase tracking-[0.5em] text-white/30 font-black">
             Scroll to Explore
           </span>
-          <motion.div 
-            animate={{ height: [20, 48, 20], opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-[1.5px] bg-gradient-to-b from-white/60 to-transparent" 
-          />
+          <div className="w-[1px] h-14 bg-white/10 relative overflow-hidden rounded-full">
+            <motion.div 
+              animate={{ 
+                y: [-56, 56] 
+              }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+              className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-white/70 to-transparent" 
+            />
+          </div>
         </motion.div>
+
       </motion.main>
     </AnimatePresence>
   );

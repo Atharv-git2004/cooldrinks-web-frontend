@@ -1,15 +1,23 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom' // Import added
-import App from './App.jsx'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App.jsx';
+import './index.css'; // Tailwind CSS ഉം മറ്റ് സ്റ്റൈലുകളും ഇവിടെ ഉണ്ടാകണം
 
-// 1. BrowserRouter ഉപയോഗിച്ച് App-നെ പൊതിയണം (Routing വർക്ക് ആകാൻ).
-// 2. StrictMode ഡെവലപ്‌മെന്റ് സമയത്ത് തെറ്റുകൾ കണ്ടെത്താൻ സഹായിക്കും.
+// AuthContext-ൽ നിന്നുള്ള AuthProvider ഇംപോർട്ട് ചെയ്യുന്നു
+import { AuthProvider } from './context/AuthContext.jsx';
+
+/**
+ * ReactDOM.createRoot: റിയാക്ട് ആപ്ലിക്കേഷൻ റെൻഡർ ചെയ്യുന്നു.
+ * AuthProvider: ആപ്പിലെ എല്ലാ പേജുകളിലും ലോഗിൻ വിവരങ്ങൾ കിട്ടാൻ സഹായിക്കുന്നു.
+ * BrowserRouter: റൂട്ടിംഗ് (Pages) കൃത്യമായി വർക്ക് ചെയ്യാൻ സഹായിക്കുന്നു.
+ */
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);
