@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiSearch, FiShoppingCart, FiHeart, FiLogOut, FiUser, FiPackage } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
+import axios from "axios";
 
 const Navbar = () => {
   const location = useLocation();
@@ -13,24 +14,66 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
 
-  // ഓരോ തവണ പേജ് മാറുമ്പോഴും ലോക്കൽ സ്റ്റോറേജിൽ നിന്ന് കൃത്യമായ കൗണ്ട് എടുക്കുന്നു
+  // ബാക്കെൻഡിൽ നിന്നും കാർട്ട്/വിഷ്‌ലിസ്റ്റ് കൗണ്ട് എടുക്കാനുള്ള ഫംഗ്ഷൻ
+  const fetchCounts = async () => {
+    // യൂസർ ലോഗിൻ ചെയ്തിട്ടില്ലെങ്കിൽ കൗണ്ട് 0 ആക്കുക
+    if (!user) {
+      setCartCount(0);
+      setWishlistCount(0);
+      return;
+    }
+
+    // 🟢 ലോക്കൽ സ്റ്റോറേജിൽ നിന്നും ടോക്കൺ എടുക്കുന്നു
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setCartCount(0);
+      setWishlistCount(0);
+      return;
+    }
+
+    try {
+      // 🟢 ബാക്കെൻഡിലേക്ക് ടോക്കൺ അയക്കാൻ config സെറ്റ് ചെയ്യുന്നു
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      };
+
+      // രണ്ടും ഒരേസമയം ഫെച്ച് ചെയ്യാൻ Promise.all ഉപയോഗിക്കുന്നു
+      const [cartRes, wishlistRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/cart", config),
+        axios.get("http://localhost:5000/api/wishlist", config),
+      ]);
+
+      setCartCount(cartRes.data?.length || 0);
+      setWishlistCount(wishlistRes.data?.length || 0);
+    } catch (error) {
+      // ടോക്കൺ എക്സ്പയർ ആവുകയോ മറ്റോ ചെയ്താൽ കൗണ്ട് സീറോ ആക്കുന്നു
+      if (error.response && error.response.status === 401) {
+        setCartCount(0);
+        setWishlistCount(0);
+      } else {
+        console.error("Error fetching counts:", error);
+      }
+    }
+  };
+
+  // ഓരോ തവണ പേജ് മാറുമ്പോഴും അല്ലെങ്കിൽ യൂസർ ലോഗിൻ/ലോഗൗട്ട് ചെയ്യുമ്പോഴും കൗണ്ട് പുതുക്കുന്നു
   useEffect(() => {
-    const updateCounts = () => {
-      const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
-      const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-      setCartCount(savedCart.length);
-      setWishlistCount(savedWishlist.length);
-    };
-
-    updateCounts();
-
-    // മറ്റ് പേജുകളിൽ നിന്ന് ലോക്കൽ സ്റ്റോറേജ് മാറിയാൽ അറിയാൻ ഒരു ലിസണർ
-    window.addEventListener("storage", updateCounts);
-    return () => window.removeEventListener("storage", updateCounts);
-  }, [location.pathname]); // റൂട്ട് മാറുമ്പോൾ കൗണ്ട് പുതുക്കും
+    fetchCounts();
+  }, [location.pathname, user]);
 
   const handleLogout = () => {
     logout();
+    // ലോഗൗട്ട് ചെയ്യുമ്പോൾ ലോക്കൽ സ്റ്റോറേജിലെ ടോക്കൺ ക്ലിയർ ചെയ്യുക
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // ലോഗൗട്ട് ചെയ്യുമ്പോൾ കൗണ്ടുകൾ ക്ലിയർ ചെയ്യുന്നു
+    setCartCount(0);
+    setWishlistCount(0);
     navigate("/login");
   };
 
@@ -96,7 +139,7 @@ const Navbar = () => {
             <FiSearch />
           </button>
 
-          {/* Orders Link (പുതുതായി ചേർത്തത്) */}
+          {/* Orders Link */}
           <Link
             to="/orders"
             className="relative p-2 text-white/70 hover:text-blue-400 transition-all duration-300 group hidden md:block"
@@ -107,7 +150,7 @@ const Navbar = () => {
             />
           </Link>
 
-          {/* Wishlist Link with Dynamic Count */}
+          {/* Wishlist Link */}
           <Link
             to="/wishlist"
             className="relative p-2 text-white/70 hover:text-pink-500 transition-all duration-300 group hidden md:block"
@@ -123,7 +166,7 @@ const Navbar = () => {
             )}
           </Link>
 
-          {/* Cart Link with Dynamic Count */}
+          {/* Cart Link */}
           <Link
             to="/cart"
             className="relative p-2 text-white/70 hover:text-green-400 transition-all duration-300 group"
@@ -143,10 +186,35 @@ const Navbar = () => {
           <div className="flex items-center gap-3 border-l border-white/10 pl-4 ml-2">
             {user ? (
               <div className="flex items-center gap-4">
-                {/* User Info */}
-                <div className="hidden lg:flex flex-col items-end">
-                  <span className="text-[10px] text-green-400 font-bold uppercase tracking-tighter">Welcome</span>
-                  <span className="text-xs text-white font-black truncate max-w-[80px]">{user.username || "User"}</span>
+                {/* User Profile Section with Image */}
+                <div className="flex items-center gap-2">
+                  <div className="hidden lg:flex flex-col items-end mr-2">
+                    <span className="text-[10px] text-green-400 font-bold uppercase tracking-tighter">Welcome</span>
+                    <span className="text-xs text-white font-black truncate max-w-[80px]">
+                      {user.username || user.name || "User"}
+                    </span>
+                  </div>
+
+                  {/* അപ്ഡേറ്റ് ചെയ്ത ഇമേജ് ഡിസ്പ്ലേ സെക്ഷൻ */}
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-green-400 bg-gray-800 flex items-center justify-center cursor-pointer">
+                    {user.image || user.avatar || user.profilePicture || user.photoURL ? (
+                      <img
+                        src={user.image || user.avatar || user.profilePicture || user.photoURL}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          // എറർ വന്നാൽ ഡിഫോൾട്ട് ആയി ഒരു ഐക്കൺ കാണിക്കാൻ
+                          e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                        }}
+                      />
+                    ) : (
+                      // ഇമേജ് ഇല്ലെങ്കിൽ പേരിൻ്റെ ആദ്യത്തെ അക്ഷരം കാണിക്കാം
+                      <span className="text-white font-bold text-sm uppercase">
+                        {(user.name || user.username || "U").charAt(0)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Logout Button */}

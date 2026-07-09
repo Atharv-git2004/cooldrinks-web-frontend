@@ -6,7 +6,7 @@ export const flavorsData = [
     description: "Experience the ultimate thirst-quencher with the crisp, clean taste of Sprite.",
     bgColor: "#008B47",
     accentColor: "#FFFF00",
-    bottleImage: "sprite.jpg"
+    bottleImage: "sprite.jpg",
   },
   {
     id: 2,
@@ -15,7 +15,7 @@ export const flavorsData = [
     description: "Bright, bubbly and instantly refreshing Fanta.",
     bgColor: "#FF8C00",
     accentColor: "#FFA500",
-    bottleImage: "fanta.jpg"
+    bottleImage: "fanta.jpg",
   },
   {
     id: 3,
@@ -24,7 +24,7 @@ export const flavorsData = [
     description: "The classic refreshing taste of Coca-Cola that everyone loves.",
     bgColor: "#F40009",
     accentColor: "#FFFFFF",
-    bottleImage: "cocacola.jpg"
+    bottleImage: "cocacola.jpg",
   },
   {
     id: 4,
@@ -33,7 +33,7 @@ export const flavorsData = [
     description: "A bold and fizzy experience that keeps you moving.",
     bgColor: "#004B91",
     accentColor: "#E32934",
-    bottleImage: "pepsi.jpg"
+    bottleImage: "pepsi.jpg",
   },
   {
     id: 5,
@@ -42,7 +42,7 @@ export const flavorsData = [
     description: "The original lemon-lime soda that’s pure, crisp, and clean.",
     bgColor: "#009933",
     accentColor: "#ADFF2F",
-    bottleImage: "7up.jpg"
+    bottleImage: "7up.jpg",
   },
   {
     id: 6,
@@ -51,7 +51,7 @@ export const flavorsData = [
     description: "A vibrant and tangy orange soda that bursts with flavor.",
     bgColor: "#FF4500",
     accentColor: "#FFD700",
-    bottleImage: "miranda.jpg"
+    bottleImage: "miranda.jpg",
   },
   {
     id: 7,
@@ -60,7 +60,7 @@ export const flavorsData = [
     description: "Do the Dew with an intense blast of citrus flavor.",
     bgColor: "#008000",
     accentColor: "#CCFF00",
-    bottleImage: "mountaindew.jpg"
+    bottleImage: "mountaindew.jpg",
   },
   {
     id: 8,
@@ -69,7 +69,7 @@ export const flavorsData = [
     description: "The energy boost you need with a powerful, smooth flavor.",
     bgColor: "#111111",
     accentColor: "#32CD32",
-    bottleImage: "monster.jpg"
+    bottleImage: "monster.jpg",
   },
   {
     id: 9,
@@ -78,7 +78,7 @@ export const flavorsData = [
     description: "The perfect companion to keep your body and mind energized.",
     bgColor: "#001E62",
     accentColor: "#FFD700",
-    bottleImage: "redbull.jpg"
+    bottleImage: "redbull.jpg",
   },
   {
     id: 10,
@@ -87,7 +87,7 @@ export const flavorsData = [
     description: "Electrify your senses with the sharp and refreshing taste of Sting.",
     bgColor: "#E60000",
     accentColor: "#FFD700",
-    bottleImage: "sting.jpg"
+    bottleImage: "sting.jpg",
   },
   {
     id: 11,
@@ -96,6 +96,6 @@ export const flavorsData = [
     description: "Experience the rich, bold flavor of real fruit in every sparkling sip.",
     bgColor: "#4B0082",
     accentColor: "#EE82EE",
-    bottleImage: "welchs.jpg"
-  }
+    bottleImage: "welchs.jpg",
+  },
 ];

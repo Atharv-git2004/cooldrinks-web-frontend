@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, useLocation, Navigate, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import axios from "axios";
 import { useAuth } from "./context/AuthContext";
 
 // Layout Components
@@ -17,20 +18,26 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
-import Orders from "./pages/Orders"; // പുതിയ Orders പേജ് ഇംപോർട്ട് ചെയ്തു
+import Orders from "./pages/Orders";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
 // Admin Pages
 import AdminLayout from "./admin/AdminLayout";
+import AdminDashboard from "./admin/AdminDashboard";
 import AddProduct from "./admin/AddProduct";
 import ManageProducts from "./admin/ManageProducts";
 import HomeManager from "./admin/HomeManager";
-import ManageOrders from "./admin/ManageOrders"; // പുതിയ ManageOrders പേജ് ഇംപോർട്ട് ചെയ്തു
+import ManageOrders from "./admin/ManageOrders";
+
+// 🟢 Axios Global Configuration: ആപ്പ് ലോഡ് ചെയ്യുമ്പോൾ ടോക്കൺ ഉണ്ടെങ്കിൽ ഡിഫോൾട്ട് ഹെഡറായി സെറ്റ് ചെയ്യുന്നു
+const token = localStorage.getItem("token");
+if (token) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
 
 /**
- * PageWrapper: ഓരോ പേജും മാറുമ്പോൾ വരുന്ന സ്മൂത്ത് ആനിമേഷൻ.
- * initial, animate, exit എന്നിവ കൃത്യമായി നൽകിയിട്ടുണ്ട്.
+ * PageWrapper: Smoothes page transitions
  */
 const PageWrapper = ({ children }) => (
   <motion.div
@@ -45,7 +52,7 @@ const PageWrapper = ({ children }) => (
 );
 
 /**
- * ProtectedRoute: അഡ്മിൻ ലോഗിൻ പരിശോധിക്കുന്നു
+ * ProtectedRoute: Admin Role verification
  */
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
@@ -58,7 +65,6 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Role "admin" ആണോ എന്ന് ചെക്ക് ചെയ്യുന്നു
   const isAdmin = user && user.role && user.role.toLowerCase() === "admin";
 
   if (!isAdmin) {
@@ -71,17 +77,14 @@ const ProtectedRoute = () => {
 function App() {
   const location = useLocation();
 
-  // Admin പാത്തുകളിലും Auth പേജുകളിലും Navbar/Footer ഒഴിവാക്കാൻ
   const isAdminPath = location.pathname.startsWith("/admin");
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <div className="bg-[#0a0a0a] min-h-screen text-white selection:bg-green-500 selection:text-black flex flex-col overflow-x-hidden">
-      {/* Navbar: Admin അല്ലെങ്കിലും Auth പേജ് അല്ലെങ്കിലും മാത്രം കാണിക്കും */}
       {!isAdminPath && !isAuthPage && <Navbar />}
 
       <main className="flex-grow">
-        {/* AnimatePresence: പേജ് ട്രാൻസിഷൻ എനേബിൾ ചെയ്യുന്നു */}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             {/* --- USER & AUTH ROUTES --- */}
@@ -149,7 +152,6 @@ function App() {
                 </PageWrapper>
               }
             />
-            {/* യൂസർക്ക് ഓർഡറുകൾ കാണാനുള്ള റൂട്ട് */}
             <Route
               path="/orders"
               element={
@@ -182,7 +184,7 @@ function App() {
                   index
                   element={
                     <PageWrapper>
-                      <div className="p-10 text-4xl font-black italic uppercase text-green-500">Admin Dashboard</div>
+                      <AdminDashboard />
                     </PageWrapper>
                   }
                 />
@@ -210,7 +212,6 @@ function App() {
                     </PageWrapper>
                   }
                 />
-                {/* അഡ്മിന് ഓർഡറുകൾ മാനേജ് ചെയ്യാനുള്ള റൂട്ട് */}
                 <Route
                   path="orders"
                   element={
@@ -222,13 +223,12 @@ function App() {
               </Route>
             </Route>
 
-            {/* Default Route */}
+            {/* 404 / Catch-all Route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
       </main>
 
-      {/* Footer & BottomNav: Admin അല്ലെങ്കിലും Auth പേജ് അല്ലെങ്കിലും മാത്രം കാണിക്കും */}
       {!isAdminPath && !isAuthPage && (
         <>
           <footer className="pb-24 md:pb-0">

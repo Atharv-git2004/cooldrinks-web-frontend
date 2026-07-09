@@ -1,14 +1,14 @@
 import React from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FiGrid, FiPlusCircle, FiList, FiLogOut, FiEdit3, FiPackage } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext"; // AuthContext പാത്ത് കൃത്യമാണെന്ന് ഉറപ്പുവരുത്തുക
+import { useAuth } from "../context/AuthContext";
 
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  // Nilavil ഏത് പേജിലാണോ നിൽക്കുന്നത് അതിനനുസരിച്ച് ലിങ്ക് ഹൈലൈറ്റ് ചെയ്യാൻ
+  // നിലവിൽ ഏത് പേജിലാണോ നിൽക്കുന്നത് അതിനനുസരിച്ച് ലിങ്ക് ഹൈലൈറ്റ് ചെയ്യാൻ
   const isActive = (path) => location.pathname === path;
 
   // Logout കൈകാര്യം ചെയ്യുന്ന ഫംഗ്ഷൻ
@@ -79,7 +79,7 @@ const AdminLayout = () => {
             <FiList className="text-lg" /> Manage Items
           </Link>
 
-          {/* Manage Orders Link (പുതുതായി ചേർത്തത്) */}
+          {/* Manage Orders Link */}
           <Link
             to="/admin/orders"
             className={`flex items-center gap-3 p-4 rounded-2xl transition-all font-bold uppercase text-[10px] tracking-widest ${
