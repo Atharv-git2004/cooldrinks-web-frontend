@@ -34,7 +34,7 @@ const Flavors = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/products");
+        const response = await axios.get("https://cooldrinkbackend.onrender.com/api/products");
         const fetchedProducts = Array.isArray(response.data) ? response.data : response.data?.products || [];
 
         // ബാക്കെൻഡ് ഡാറ്റ ഫോർമാറ്റ് ചെയ്യുന്നു
@@ -142,7 +142,7 @@ const Flavors = () => {
 
       if (token) {
         try {
-          await axios.delete(`http://localhost:5000/api/wishlist/${item.id}`, config);
+          await axios.delete(`https://cooldrinkbackend.onrender.com/api/wishlist/${item.id}`, config);
         } catch (error) {
           console.error("Error removing from backend wishlist:", error);
         }
@@ -167,7 +167,7 @@ const Flavors = () => {
             item: cartFormatItem,
           };
           // ടോക്കൺ (config) ഉൾപ്പെടുത്തി പോസ്റ്റ് ചെയ്യുന്നു
-          await axios.post("http://localhost:5000/api/wishlist/add", payload, config);
+          await axios.post("https://cooldrinkbackend.onrender.com/api/wishlist/add", payload, config);
         } catch (error) {
           console.error("Error adding to wishlist:", error.response?.data || error.message);
         }

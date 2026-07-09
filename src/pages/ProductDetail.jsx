@@ -14,7 +14,7 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
 
   // Set your Backend URL here
-  const API_BASE_URL = "http://localhost:5000";
+  const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
   useEffect(() => {
     const fetchProduct = async () => {

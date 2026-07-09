@@ -13,7 +13,7 @@ const Wishlist = () => {
   const fetchWishlist = async () => {
     try {
       const token = getToken();
-      const response = await axios.get("http://localhost:5000/api/wishlist", {
+      const response = await axios.get("https://cooldrinkbackend.onrender.com/api/wishlist", {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
@@ -32,7 +32,7 @@ const Wishlist = () => {
     if (e) e.stopPropagation();
     try {
       const token = getToken();
-      await axios.delete(`http://localhost:5000/api/wishlist/${productId}`, {
+      await axios.delete(`https://cooldrinkbackend.onrender.com/api/wishlist/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
@@ -56,7 +56,7 @@ const Wishlist = () => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/cart/add",
+        "https://cooldrinkbackend.onrender.com/api/cart/add",
         { item: itemData },
         {
           headers: { Authorization: `Bearer ${token}` },

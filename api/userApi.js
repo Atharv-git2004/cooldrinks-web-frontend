@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // ബേസ് URL-കൾ
-const USER_BASE_URL = "http://localhost:5000/api/users";
-const PRODUCT_BASE_URL = "http://localhost:5000/api/products";
+const USER_BASE_URL = "https://cooldrinkbackend.onrender.com/api/users";
+const PRODUCT_BASE_URL = "https://cooldrinkbackend.onrender.com/api/products";
 
 // 1. Login API Call
 export const loginAPI = async (credentials) => {

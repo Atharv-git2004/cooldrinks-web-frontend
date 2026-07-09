@@ -19,7 +19,7 @@ const Home = () => {
   useEffect(() => {
     const fetchHero = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/home/get");
+        const res = await axios.get("https://cooldrinkbackend.onrender.com/api/home/get");
         console.log("Hero Data from Backend:", res.data);
 
         if (res.data) {
@@ -37,7 +37,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/products");
+        const response = await axios.get("https://cooldrinkbackend.onrender.com/api/products");
         setProducts(Array.isArray(response.data) ? response.data : response.data.products || []);
       } catch (error) {
         console.error("Error fetching products:", error);

@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       try {
         // ഓരോ തവണ പേജ് റീഫ്രഷ് ചെയ്യുമ്പോഴും ബാക്കെൻഡിൽ സെഷൻ ലൈവ് ആണോ എന്ന് നോക്കുന്നു
-        const response = await axios.get("http://localhost:5000/api/users/me");
+        const response = await axios.get("https://cooldrinkbackend.onrender.com/api/users/me");
 
         if (response.data.success && response.data.user) {
           setUser(response.data.user);
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // ബാക്കെൻഡിലെ കുക്കി/സെഷൻ ക്ലിയർ ചെയ്യാൻ
-      await axios.get("http://localhost:5000/api/users/logout");
+      await axios.get("https://cooldrinkbackend.onrender.com/api/users/logout");
     } catch (err) {
       console.error("Logout Error:", err);
     } finally {

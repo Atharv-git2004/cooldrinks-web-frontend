@@ -21,7 +21,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/users/login",
+        "https://cooldrinkbackend.onrender.com/api/users/login",
         { email, password },
         { withCredentials: true },
       );
@@ -50,7 +50,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/users/google";
+    window.location.href = "https://cooldrinkbackend.onrender.com/api/users/google";
   };
 
   return (

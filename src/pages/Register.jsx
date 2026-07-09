@@ -38,7 +38,7 @@ const Register = () => {
     try {
       // ബാക്കെൻഡിലേക്ക് നേരിട്ട് അക്ഷിയോസ് വഴി റിക്വസ്റ്റ് അയക്കുന്നു
       const response = await axios.post(
-        "http://localhost:5000/api/users/register",
+        "https://cooldrinkbackend.onrender.com/api/users/register",
         {
           username: formData.username,
           email: formData.email,
@@ -69,7 +69,7 @@ const Register = () => {
 
   const handleGoogleLogin = () => {
     // 🟢 ബാക്കെൻഡിലെ ഗൂഗിൾ ലോഗിൻ റൂട്ടിലേക്ക് റീഡയറക്ട് ചെയ്യുന്നു
-    window.location.href = "http://localhost:5000/api/users/google";
+    window.location.href = "https://cooldrinkbackend.onrender.com/api/users/google";
   };
 
   return (
