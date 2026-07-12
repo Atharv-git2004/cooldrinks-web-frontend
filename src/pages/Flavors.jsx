@@ -34,7 +34,9 @@ const Flavors = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("https://cooldrinkbackend.onrender.com/api/products");
+        const response = await axios.get("https://cooldrinkbackend.onrender.com/api/products", {
+          withCredentials: true, // 🔥 സെഷൻ കുക്കികൾ ഉണ്ടെങ്കിൽ അത് കൈമാറാൻ
+        });
         const fetchedProducts = Array.isArray(response.data) ? response.data : response.data?.products || [];
 
         // ബാക്കെൻഡ് ഡാറ്റ ഫോർമാറ്റ് ചെയ്യുന്നു
@@ -114,7 +116,7 @@ const Flavors = () => {
     navigate(`/product/${item.id}`, { state: { product: productWithImage } });
   };
 
-  // 🟢 ടോഗിൾ വിഷ്‌ലിസ്റ്റ് ഫംഗ്ഷൻ (API കാളും ടോക്കണും ഉൾപ്പെടുത്തിയിരിക്കുന്നു)
+  // 🟢 ടോഗിൾ വിഷ്‌ലിസ്റ്റ് ഫംഗ്ഷൻ (API കാളും കുക്കികളും ഉൾപ്പെടുത്തിയിരിക്കുന്നു)
   const handleToggleWishlist = async (e, item) => {
     e.stopPropagation();
     setLoadingItems((prev) => ({ ...prev, [item.id]: true }));
@@ -123,15 +125,14 @@ const Flavors = () => {
     const existingWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
     const isAlreadyWishlisted = existingWishlist.find((i) => i.id === item.id);
 
-    // നിങ്ങളുടെ ലോഗിൻ ടോക്കൺ എടുക്കുന്നു
+    // നിങ്ങളുടെ ലോഗിൻ ടോക്കൺ എടുക്കുന്നു (ഉണ്ടെങ്കിൽ)
     const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user"); // യൂസർ ലോഗിൻ ആണോ എന്ന് ചെക്ക് ചെയ്യാൻ
 
     // ടോക്കണും Credentials-ഉം വെച്ച് ഹെഡർ സെറ്റ് ചെയ്യുന്നു
     const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      withCredentials: true, // 🔥 Google ലോഗിൻ/കുക്കി സെഷൻ വഴി ലോഗിൻ ചെയ്താലും വർക്ക് ചെയ്യാൻ
     };
 
     if (isAlreadyWishlisted) {
@@ -140,7 +141,7 @@ const Flavors = () => {
       localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
       setWishlistedItems((prev) => prev.filter((id) => id !== item.id));
 
-      if (token) {
+      if (token || user) {
         try {
           await axios.delete(`https://cooldrinkbackend.onrender.com/api/wishlist/${item.id}`, config);
         } catch (error) {
@@ -161,18 +162,16 @@ const Flavors = () => {
       setWishlistedItems((prev) => [...prev, item.id]);
 
       // ലോഗിൻ ചെയ്ത യൂസർ ആണെങ്കിൽ മാത്രം ബാക്കെൻഡിലേക്ക് റിക്വസ്റ്റ് അയക്കുന്നു
-      if (token) {
+      if (token || user) {
         try {
           const payload = {
             item: cartFormatItem,
           };
-          // ടോക്കൺ (config) ഉൾപ്പെടുത്തി പോസ്റ്റ് ചെയ്യുന്നു
+          // കുക്കികളും ടോക്കണും (config) ഉൾപ്പെടുത്തി പോസ്റ്റ് ചെയ്യുന്നു
           await axios.post("https://cooldrinkbackend.onrender.com/api/wishlist/add", payload, config);
         } catch (error) {
           console.error("Error adding to wishlist:", error.response?.data || error.message);
         }
-      } else {
-        console.log("User not logged in. Saved to local storage only.");
       }
     }
 

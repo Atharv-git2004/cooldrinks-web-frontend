@@ -2,29 +2,32 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FiTrash2, FiShoppingBag, FiArrowLeft, FiChevronRight } from "react-icons/fi";
-import axios from "axios"; // മറക്കാതെ axios ഇംപോർട്ട് ചെയ്യുക
+import axios from "axios";
 
 const Cart = () => {
   const navigate = useNavigate();
-
-  // localStorage ഒഴിവാക്കി, പകരം വെറും empty array ആയി തുടക്കം നൽകുന്നു
   const [cartItems, setCartItems] = useState([]);
+
+  // ടോക്കൺ സ്റ്റോറേജിൽ ഉണ്ടെങ്കിൽ എടുക്കാൻ
+  const getToken = () => localStorage.getItem("token");
 
   // API വഴി കാർട്ട് ഡാറ്റ എടുക്കാനുള്ള ഫംഗ്ഷൻ
   const fetchCart = async () => {
     try {
-      // userId ആവശ്യമില്ല, കുക്കി വഴി ബാക്കെൻഡ് മനസ്സിലാക്കും
-      const response = await axios.get("http://localhost:5000/api/cart", {
-        withCredentials: true, // കുക്കി ബാക്കെൻഡിലേക്ക് പോകാൻ ഇത് നിർബന്ധമാണ്
+      const token = getToken();
+      // നിങ്ങളുടെ ലോക്കൽഹോസ്റ്റ് ആണെങ്കിൽ "http://localhost:5000/api/cart" എന്ന് മാറ്റാം
+      const response = await axios.get("https://cooldrinkbackend.onrender.com/api/cart", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
       });
-      // ബാക്കെൻഡിൽ നിന്നുള്ള ഡാറ്റ സെറ്റ് ചെയ്യുന്നു (അറേ ആണെന്ന് ഉറപ്പാക്കുക)
-      setCartItems(response.data || []);
+
+      // ബാക്കെൻഡിൽ നിന്നുള്ള ഡാറ്റ അറേ ആണെന്ന് ഉറപ്പാക്കുന്നു
+      setCartItems(response.data.items || response.data || []);
     } catch (err) {
       console.error("Error fetching cart", err);
     }
   };
 
-  // പേജ് ലോഡ് ആകുമ്പോൾ കാർട്ട് ഡാറ്റ എടുക്കുക
   useEffect(() => {
     fetchCart();
   }, []);
@@ -33,12 +36,13 @@ const Cart = () => {
   const removeFromCart = async (id, e) => {
     e.stopPropagation();
     try {
-      // ബാക്കെൻഡിൽ നിന്നും ഐറ്റം ഡിലീറ്റ് ചെയ്യുന്നു (നിങ്ങളുടെ റൂട്ട് അനുസരിച്ച് മാറ്റാം)
-      await axios.delete(`http://localhost:5000/api/cart/${id}`, {
+      const token = getToken();
+      await axios.delete(`https://cooldrinkbackend.onrender.com/api/cart/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       });
       // ഡിലീറ്റ് ചെയ്ത ശേഷം സ്ക്രീനിൽ നിന്നും അത് ഒഴിവാക്കുന്നു
-      setCartItems((prev) => prev.filter((item) => (item._id || item.id) !== id));
+      setCartItems((prev) => prev.filter((item) => (item._id || item.id || item.productId) !== id));
     } catch (err) {
       console.error("Error removing item", err);
     }
@@ -53,8 +57,7 @@ const Cart = () => {
   };
 
   const navigateToDetails = (item) => {
-    // id അല്ലെങ്കിൽ MongoDB യുടെ _id ഉപയോഗിക്കാം
-    const itemId = item._id || item.id;
+    const itemId = item._id || item.id || item.productId;
     navigate(`/product/${itemId}`, { state: { product: item } });
   };
 
@@ -84,81 +87,83 @@ const Cart = () => {
         >
           {cartItems.length > 0 ? (
             <div className="space-y-4 md:space-y-6">
-              {cartItems.map((item) => {
-                const itemId = item._id || item.id; // MongoDB id സപ്പോർട്ട് ചെയ്യാൻ
-                const itemColor = item.bgColor || "#22c55e";
-                const itemPrice = item.price || 99;
-                const itemQuantity = item.quantity || 1;
+              <AnimatePresence>
+                {cartItems.map((item) => {
+                  const itemId = item._id || item.id || item.productId;
+                  const itemColor = item.bgColor || "#22c55e";
+                  const itemPrice = item.price || 99;
+                  const itemQuantity = item.quantity || 1;
 
-                return (
-                  <motion.div
-                    key={itemId}
-                    layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-                    whileHover={{ y: -5 }}
-                    onClick={() => navigateToDetails(item)}
-                    className="group flex flex-col sm:flex-row items-center justify-between p-4 md:p-6 bg-[#111111] border border-white/5 rounded-2xl md:rounded-[2rem] hover:border-white/20 hover:bg-[#151515] transition-all duration-300 cursor-pointer overflow-hidden relative"
-                  >
-                    {/* Background Glow Effect */}
-                    <div
-                      className="absolute -left-20 -top-20 w-40 h-40 blur-[80px] rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"
-                      style={{ backgroundColor: itemColor }}
-                    />
+                  return (
+                    <motion.div
+                      key={itemId || Math.random()}
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                      whileHover={{ y: -5 }}
+                      onClick={() => navigateToDetails(item)}
+                      className="group flex flex-col sm:flex-row items-center justify-between p-4 md:p-6 bg-[#111111] border border-white/5 rounded-2xl md:rounded-[2rem] hover:border-white/20 hover:bg-[#151515] transition-all duration-300 cursor-pointer overflow-hidden relative"
+                    >
+                      {/* Background Glow Effect */}
+                      <div
+                        className="absolute -left-20 -top-20 w-40 h-40 blur-[80px] rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"
+                        style={{ backgroundColor: itemColor }}
+                      />
 
-                    <div className="flex w-full sm:w-auto items-center gap-4 md:gap-8 relative z-10">
-                      {/* Product Image */}
-                      <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0 flex items-center justify-center p-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
-                        <img
-                          src={getProductImage(item.img || item.bottleImage)}
-                          alt={item.title}
-                          onError={(e) => {
-                            e.target.src = "/placeholder.png";
-                          }}
-                          className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500"
-                        />
-                      </div>
+                      <div className="flex w-full sm:w-auto items-center gap-4 md:gap-8 relative z-10">
+                        {/* Product Image */}
+                        <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0 flex items-center justify-center p-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
+                          <img
+                            src={getProductImage(item.img || item.bottleImage)}
+                            alt={item.title}
+                            onError={(e) => {
+                              e.target.src = "/placeholder.png";
+                            }}
+                            className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500"
+                          />
+                        </div>
 
-                      {/* Product Details */}
-                      <div className="flex-1">
-                        <h3 className="text-lg md:text-2xl font-black italic uppercase tracking-tight text-white mb-1 md:mb-2 group-hover:text-green-400 transition-colors line-clamp-1">
-                          {item.title}
-                        </h3>
-                        <div className="flex items-center gap-3">
-                          <p className="text-base md:text-lg font-black" style={{ color: itemColor }}>
-                            ₹{itemPrice}
-                          </p>
-                          <span className="text-gray-600 text-xs font-bold uppercase tracking-widest border border-white/10 px-2 py-0.5 rounded-md">
-                            Qty: {itemQuantity}
-                          </span>
+                        {/* Product Details */}
+                        <div className="flex-1">
+                          <h3 className="text-lg md:text-2xl font-black italic uppercase tracking-tight text-white mb-1 md:mb-2 group-hover:text-green-400 transition-colors line-clamp-1">
+                            {item.title}
+                          </h3>
+                          <div className="flex items-center gap-3">
+                            <p className="text-base md:text-lg font-black" style={{ color: itemColor }}>
+                              ₹{itemPrice}
+                            </p>
+                            <span className="text-gray-600 text-xs font-bold uppercase tracking-widest border border-white/10 px-2 py-0.5 rounded-md">
+                              Qty: {itemQuantity}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4 mt-4 sm:mt-0 relative z-10 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
-                      <div className="flex flex-col sm:items-end mr-2 md:mr-6">
-                        <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Subtotal</span>
-                        <span className="text-lg md:text-xl font-black text-white">₹{itemPrice * itemQuantity}</span>
-                      </div>
+                      {/* Actions */}
+                      <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4 mt-4 sm:mt-0 relative z-10 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
+                        <div className="flex flex-col sm:items-end mr-2 md:mr-6">
+                          <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Subtotal</span>
+                          <span className="text-lg md:text-xl font-black text-white">₹{itemPrice * itemQuantity}</span>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => removeFromCart(itemId, e)}
-                          className="p-3 md:p-4 text-gray-500 bg-black/40 hover:text-red-500 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-xl md:rounded-2xl transition-all duration-300"
-                          title="Remove item"
-                        >
-                          <FiTrash2 size={20} />
-                        </button>
-                        <div className="p-3 md:p-4 text-white/30 group-hover:text-white group-hover:bg-white/10 rounded-xl md:rounded-2xl transition-all duration-300 hidden sm:flex">
-                          <FiChevronRight size={20} />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => removeFromCart(itemId, e)}
+                            className="p-3 md:p-4 text-gray-500 bg-black/40 hover:text-red-500 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-xl md:rounded-2xl transition-all duration-300"
+                            title="Remove item"
+                          >
+                            <FiTrash2 size={20} />
+                          </button>
+                          <div className="p-3 md:p-4 text-white/30 group-hover:text-white group-hover:bg-white/10 rounded-xl md:rounded-2xl transition-all duration-300 hidden sm:flex">
+                            <FiChevronRight size={20} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
 
               {/* Checkout Section */}
               <motion.div
@@ -196,6 +201,7 @@ const EmptyState = ({ icon, title, navigate }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.95 }}
     className="text-center py-20 md:py-32 flex flex-col items-center gap-6 text-gray-500 bg-[#0a0a0a] border border-white/5 rounded-[3rem] md:rounded-[4rem]"
   >
     <div className="text-6xl md:text-8xl text-gray-800 mb-2 drop-shadow-2xl">{icon}</div>
