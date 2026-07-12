@@ -8,6 +8,9 @@ const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
 
+  // API Base URL കൃത്യമായി സെറ്റ് ചെയ്യുന്നു
+  const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
+
   // ടോക്കൺ സ്റ്റോറേജിൽ ഉണ്ടെങ്കിൽ എടുക്കാൻ
   const getToken = () => localStorage.getItem("token");
 
@@ -15,16 +18,26 @@ const Cart = () => {
   const fetchCart = async () => {
     try {
       const token = getToken();
-      // നിങ്ങളുടെ ലോക്കൽഹോസ്റ്റ് ആണെങ്കിൽ "http://localhost:5000/api/cart" എന്ന് മാറ്റാം
-      const response = await axios.get("https://cooldrinkbackend.onrender.com/api/cart", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+
+      if (!token) {
+        console.log("No token found. User might not be logged in.");
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/cart`, {
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
       // ബാക്കെൻഡിൽ നിന്നുള്ള ഡാറ്റ അറേ ആണെന്ന് ഉറപ്പാക്കുന്നു
       setCartItems(response.data.items || response.data || []);
     } catch (err) {
-      console.error("Error fetching cart", err);
+      console.error("Error fetching cart:", err.response?.data || err.message);
+      // അഥവാ ടോക്കൺ കാലാവധി കഴിഞ്ഞെങ്കിൽ ലോഗിൻ പേജിലേക്ക് വിടാം
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
@@ -37,28 +50,32 @@ const Cart = () => {
     e.stopPropagation();
     try {
       const token = getToken();
-      await axios.delete(`https://cooldrinkbackend.onrender.com/api/cart/${id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      await axios.delete(`${API_BASE_URL}/api/cart/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
       // ഡിലീറ്റ് ചെയ്ത ശേഷം സ്ക്രീനിൽ നിന്നും അത് ഒഴിവാക്കുന്നു
       setCartItems((prev) => prev.filter((item) => (item._id || item.id || item.productId) !== id));
     } catch (err) {
-      console.error("Error removing item", err);
+      console.error("Error removing item:", err.response?.data || err.message);
     }
   };
 
+  // 🟢 ഇമേജ് ലോഡ് ആവാത്ത പ്രശ്നം പരിഹരിക്കാൻ ബാക്കെൻഡ് URL ചേർക്കുന്നു
   const getProductImage = (img) => {
     if (!img) return "/placeholder.png";
-    if (img.startsWith("http") || img.startsWith("/") || img.startsWith("data:")) {
-      return img;
-    }
-    return `/drinks/${img}`;
+    if (img.startsWith("http") || img.startsWith("data:")) return img;
+    if (img.startsWith("/")) return `${API_BASE_URL}${img}`;
+
+    // ബാക്കിയുള്ളവയ്ക്ക് /uploads/ ചേർത്ത് നൽകുക
+    return `${API_BASE_URL}/uploads/${img}`;
   };
 
   const navigateToDetails = (item) => {
     const itemId = item._id || item.id || item.productId;
-    navigate(`/product/${itemId}`, { state: { product: item } });
+    if (itemId) {
+      navigate(`/product/${itemId}`, { state: { product: item } });
+    }
   };
 
   const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 99) * (item.quantity || 1), 0);
@@ -116,7 +133,7 @@ const Cart = () => {
                         <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0 flex items-center justify-center p-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
                           <img
                             src={getProductImage(item.img || item.bottleImage)}
-                            alt={item.title}
+                            alt={item.title || "Product Image"}
                             onError={(e) => {
                               e.target.src = "/placeholder.png";
                             }}
@@ -127,7 +144,7 @@ const Cart = () => {
                         {/* Product Details */}
                         <div className="flex-1">
                           <h3 className="text-lg md:text-2xl font-black italic uppercase tracking-tight text-white mb-1 md:mb-2 group-hover:text-green-400 transition-colors line-clamp-1">
-                            {item.title}
+                            {item.title || "Unknown Product"}
                           </h3>
                           <div className="flex items-center gap-3">
                             <p className="text-base md:text-lg font-black" style={{ color: itemColor }}>
