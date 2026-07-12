@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FiTrash2, FiShoppingBag, FiArrowLeft, FiChevronRight } from "react-icons/fi";
+import { FiTrash2, FiShoppingBag, FiArrowLeft } from "react-icons/fi";
 import axios from "axios";
 
 const Cart = () => {
@@ -20,6 +20,7 @@ const Cart = () => {
         withCredentials: true,
       });
 
+      // ബാക്കെൻഡിൽ നിന്ന് വരുന്ന ഡാറ്റ കൃത്യമായി അറേഞ്ച് ചെയ്യുന്നു
       const items = response.data?.cart?.items || response.data?.items || response.data || [];
       setCartItems(Array.isArray(items) ? items : []);
     } catch (err) {
@@ -52,12 +53,12 @@ const Cart = () => {
     }
   };
 
-  // 🌟 MAGIC FIX: Image Formatting Logic 🌟
+  // 🟢 IMAGE FORMATTING LOGIC (FIXED UPLOADS PATH ISSUE)
   const getProductImage = (item) => {
-    const img = item.img || item.bottleImage || item.displayImage || item?.productId?.img;
-    const title = (item.title || item?.productId?.title || "").toLowerCase();
+    const img = item?.productId?.img || item.img || item.bottleImage || item.displayImage;
+    const title = (item?.productId?.title || item.title || "").toLowerCase();
 
-    // 1. ഹാർഡ്‌കോഡ് ചെയ്ത ഐറ്റങ്ങൾക്ക് ഡയറക്റ്റ് ഇമേജ് കൊടുക്കുന്നു (No Error!)
+    // 1. ഹാർഡ്‌കോഡ് ചെയ്ത യുആർഎൽ ബാക്കപ്പുകൾ
     if (title.includes("sprite")) return "https://m.media-amazon.com/images/I/51v8nyxSOYL._SL1500_.jpg";
     if (title.includes("fanta")) return "https://m.media-amazon.com/images/I/61b7l5x0YcL._SL1500_.jpg";
     if (title.includes("welch")) return "https://m.media-amazon.com/images/I/81I-u8sI+ML._SL1500_.jpg";
@@ -66,21 +67,28 @@ const Cart = () => {
 
     let imageUrl = typeof img === "string" ? img : String(img);
 
-    // 2. localhost എററുകൾ ബ്ലോക്ക് ചെയ്യുന്നു (Mixed Content Error ഫിക്സ്)
+    // 2. localhost ഇമേജ് ലിങ്കുകൾ ഉണ്ടെങ്കിൽ ബ്ലോക്ക് ചെയ്യുന്നു
     if (imageUrl.includes("localhost")) {
       return "/placeholder.png";
     }
 
-    // 3. HTTP നെ HTTPS ആക്കി മാറ്റുന്നു
+    // 3. HTTP പ്രോട്ടോക്കോൾ HTTPS ആക്കുന്നു
     if (imageUrl.startsWith("http://")) {
       imageUrl = imageUrl.replace("http://", "https://");
     }
 
+    // 4. ഡയറക്റ്റ് ലിങ്ക് ആണെങ്കിൽ അത് തന്നെ റിട്ടേൺ ചെയ്യുന്നു
     if (imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
       return imageUrl;
     }
 
-    return `${API_BASE_URL}/uploads/${imageUrl.replace(/^\//, "")}`;
+    // 5. അഡ്മിൻ പാനലിൽ നിന്നുള്ള ചിത്രങ്ങൾ കൃത്യമായി എടുക്കാൻ (Double uploads/ ഒഴിവാക്കുന്നു)
+    const cleanPath = imageUrl.replace(/^\//, "");
+    if (cleanPath.startsWith("uploads/")) {
+      return `${API_BASE_URL}/${cleanPath}`;
+    }
+
+    return `${API_BASE_URL}/uploads/${cleanPath}`;
   };
 
   const navigateToDetails = (item) => {
@@ -91,7 +99,7 @@ const Cart = () => {
   };
 
   const totalPrice = cartItems.reduce((acc, item) => {
-    const price = item.price || item?.productId?.price || 99;
+    const price = item?.productId?.price || item.price || 99;
     const quantity = item.quantity || 1;
     return acc + price * quantity;
   }, 0);
@@ -120,16 +128,16 @@ const Cart = () => {
           {cartItems.length > 0 ? (
             <div className="space-y-4 md:space-y-6">
               <AnimatePresence>
-                {cartItems.map((item) => {
+                {cartItems.map((item, index) => {
                   const itemId = item?.productId?._id || item.productId || item._id;
-                  const itemTitle = item.title || item?.productId?.title || "Unknown Product";
-                  const itemColor = item.bgColor || item?.productId?.bgColor || "#22c55e";
-                  const itemPrice = item.price || item?.productId?.price || 99;
+                  const itemTitle = item?.productId?.title || item.title || "Unknown Product";
+                  const itemColor = item?.productId?.bgColor || item.bgColor || "#22c55e";
+                  const itemPrice = item?.productId?.price || item.price || 99;
                   const itemQuantity = item.quantity || 1;
 
                   return (
                     <motion.div
-                      key={itemId || Math.random()}
+                      key={itemId || `cart-item-${index}`}
                       layout
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}

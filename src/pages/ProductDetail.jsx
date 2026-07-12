@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiMinus, FiPlus, FiHeart, FiArrowLeft, FiShoppingCart, FiCreditCard } from "react-icons/fi";
+import { FiMinus, FiPlus, FiHeart, FiArrowLeft, FiShoppingCart } from "react-icons/fi";
 import axios from "axios";
 
 const ProductDetail = () => {
@@ -65,8 +65,7 @@ const ProductDetail = () => {
     return `${API_BASE_URL}/uploads/${img}`;
   };
 
-  const productPrice = product.price || 99;
-  const originalPrice = product.originalPrice || productPrice + 21;
+  const productPrice = Number(product.price) || 99; // 💡 വില കൃത്യമായി Number ആണെന്ന് ഉറപ്പുവരുത്തുന്നു
   const productImage = getProductImage(product);
   const bgColor = product.bgColor || "#22c55e";
 
@@ -85,29 +84,32 @@ const ProductDetail = () => {
     }
 
     try {
+      // 💡 ID കൃത്യമായി എടുക്കുന്നു (MongoDB യുടേതാണെന്ന് ഉറപ്പാക്കുന്നു)
       const productId = product._id || product.id || id;
-
-      // ഇമേജ് ഡാറ്റ കൃത്യമായി എടുക്കുന്നു
       const imagePath = product.img || product.bottleImage || product.displayImage || "";
+      const title = product.title || "Premium Drink";
 
       const payload = {
         productId: productId,
         quantity: quantity,
         price: productPrice,
-        title: product.title,
-        img: imagePath, // ഇതാണ് പ്രധാനപ്പെട്ട മാറ്റം
+        title: title,
+        img: imagePath,
         bgColor: bgColor,
       };
+
+      console.log("Sending payload to cart:", payload); // എന്ത് ഡാറ്റയാണ് പോകുന്നത് എന്ന് കൺസോളിൽ കാണാൻ
 
       await axios.post(`${API_BASE_URL}/api/cart`, payload, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
-      if (showAlert) alert(`${product.title} added to Cart! 🛒`);
+      if (showAlert) alert(`${title} added to Cart! 🛒`);
     } catch (err) {
       console.error("Cart Error:", err);
-      alert(err.response?.data?.message || "Failed to add to cart");
+      // ബാക്കെൻഡിൽ നിന്നുള്ള യഥാർത്ഥ എറർ മെസ്സേജ് കാണിക്കാൻ
+      alert(err.response?.data?.message || "Failed to add to cart. Make sure this product is in the database.");
     }
   };
 
@@ -190,7 +192,7 @@ const ProductDetail = () => {
             <button
               onClick={() => handleAddToCart(true)}
               style={{ backgroundColor: bgColor }}
-              className="flex-1 text-black font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest flex items-center justify-center gap-3"
+              className="flex-1 text-black font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform"
             >
               <FiShoppingCart /> Add to Cart
             </button>
@@ -199,13 +201,13 @@ const ProductDetail = () => {
                 handleAddToCart(false);
                 navigate("/checkout");
               }}
-              className="flex-1 border-2 border-white text-white font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest"
+              className="flex-1 border-2 border-white text-white font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest hover:bg-white hover:text-black transition-colors"
             >
               Order Now
             </button>
             <button
               onClick={handleWishlist}
-              className="p-4 px-6 border border-white/10 rounded-[2rem] text-2xl text-gray-400 hover:text-pink-500"
+              className="p-4 px-6 border border-white/10 rounded-[2rem] text-2xl text-gray-400 hover:text-pink-500 hover:border-pink-500 transition-colors"
             >
               <FiHeart />
             </button>
