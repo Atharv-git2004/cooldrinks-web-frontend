@@ -8,13 +8,13 @@ const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
 
-  // API Base URL കൃത്യമായി സെറ്റ് ചെയ്യുന്നു
+  // API Base URL
   const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
-  // ടോക്കൺ സ്റ്റോറേജിൽ ഉണ്ടെങ്കിൽ എടുക്കാൻ
+  // ടോക്കൺ എടുക്കാൻ
   const getToken = () => localStorage.getItem("token");
 
-  // API വഴി കാർട്ട് ഡാറ്റ എടുക്കാനുള്ള ഫംഗ്ഷൻ
+  // കാർട്ട് ഡാറ്റ എടുക്കാനുള്ള ഫംഗ്ഷൻ
   const fetchCart = async () => {
     try {
       const token = getToken();
@@ -29,11 +29,9 @@ const Cart = () => {
         withCredentials: true,
       });
 
-      // ബാക്കെൻഡിൽ നിന്നുള്ള ഡാറ്റ അറേ ആണെന്ന് ഉറപ്പാക്കുന്നു
       setCartItems(response.data.items || response.data || []);
     } catch (err) {
       console.error("Error fetching cart:", err.response?.data || err.message);
-      // അഥവാ ടോക്കൺ കാലാവധി കഴിഞ്ഞെങ്കിൽ ലോഗിൻ പേജിലേക്ക് വിടാം
       if (err.response?.status === 401) {
         localStorage.removeItem("token");
         navigate("/login");
@@ -45,7 +43,7 @@ const Cart = () => {
     fetchCart();
   }, []);
 
-  // കാർട്ടിൽ നിന്നും ഐറ്റം റിമൂവ് ചെയ്യാനുള്ള ഫംഗ്ഷൻ
+  // റിമൂവ് ഫംഗ്ഷൻ
   const removeFromCart = async (id, e) => {
     e.stopPropagation();
     try {
@@ -54,21 +52,40 @@ const Cart = () => {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-      // ഡിലീറ്റ് ചെയ്ത ശേഷം സ്ക്രീനിൽ നിന്നും അത് ഒഴിവാക്കുന്നു
       setCartItems((prev) => prev.filter((item) => (item._id || item.id || item.productId) !== id));
     } catch (err) {
       console.error("Error removing item:", err.response?.data || err.message);
     }
   };
 
-  // 🟢 ഇമേജ് ലോഡ് ആവാത്ത പ്രശ്നം പരിഹരിക്കാൻ ബാക്കെൻഡ് URL ചേർക്കുന്നു
+  // 🟢 ഇമേജ് ലോഡ് ആവാത്ത പ്രശ്നം പൂർണ്ണമായി പരിഹരിച്ച ഫംഗ്ഷൻ
   const getProductImage = (img) => {
     if (!img) return "/placeholder.png";
-    if (img.startsWith("http") || img.startsWith("data:")) return img;
-    if (img.startsWith("/")) return `${API_BASE_URL}${img}`;
 
-    // ബാക്കിയുള്ളവയ്ക്ക് /uploads/ ചേർത്ത് നൽകുക
-    return `${API_BASE_URL}/uploads/${img}`;
+    let imageUrl = img;
+
+    // 1. പഴയ Localhost ലിങ്ക് ആണെങ്കിൽ അത് Render URL ആക്കി മാറ്റുന്നു
+    if (typeof imageUrl === "string" && imageUrl.includes("localhost:5000")) {
+      imageUrl = imageUrl.replace("http://localhost:5000", API_BASE_URL);
+    }
+
+    // 2. പൂർണ്ണമായ URL ആണെങ്കിൽ നേരിട്ട് കൊടുക്കുന്നു
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("data:")) {
+      return imageUrl;
+    }
+
+    // 3. /uploads/ എന്ന് തന്നെ തുടങ്ങുന്നുണ്ടെങ്കിൽ ഡബിൾ സ്ലാഷ് ഒഴിവാക്കാൻ
+    if (imageUrl.startsWith("/uploads/")) {
+      return `${API_BASE_URL}${imageUrl}`;
+    }
+
+    // 4. വെറും / ആണെങ്കിൽ
+    if (imageUrl.startsWith("/")) {
+      return `${API_BASE_URL}/uploads${imageUrl}`;
+    }
+
+    // 5. വെറും ഫയലിന്റെ പേര് മാത്രമാണെങ്കിൽ
+    return `${API_BASE_URL}/uploads/${imageUrl}`;
   };
 
   const navigateToDetails = (item) => {
@@ -111,6 +128,9 @@ const Cart = () => {
                   const itemPrice = item.price || 99;
                   const itemQuantity = item.quantity || 1;
 
+                  // ഡാറ്റാബേസിൽ പല രീതിയിൽ സേവ് ആയ ഇമേജുകൾ കൃത്യമായി എടുക്കാൻ
+                  const imageToLoad = item.img || item.bottleImage || item?.productId?.img;
+
                   return (
                     <motion.div
                       key={itemId || Math.random()}
@@ -132,7 +152,7 @@ const Cart = () => {
                         {/* Product Image */}
                         <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0 flex items-center justify-center p-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
                           <img
-                            src={getProductImage(item.img || item.bottleImage)}
+                            src={getProductImage(imageToLoad)}
                             alt={item.title || "Product Image"}
                             onError={(e) => {
                               e.target.src = "/placeholder.png";
