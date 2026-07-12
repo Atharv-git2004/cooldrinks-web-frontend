@@ -8,7 +8,6 @@ const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
 
-  // API Base URL - Update to "http://localhost:5000" if you are testing locally
   const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
   // Fetch Cart Data
@@ -18,10 +17,12 @@ const Cart = () => {
 
       const response = await axios.get(`${API_BASE_URL}/api/cart`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
-        withCredentials: true, // Crucial for cookie-based auth
+        withCredentials: true,
       });
 
-      setCartItems(response.data.items || response.data || []);
+      // Robust check to handle different backend response structures
+      const items = response.data?.cart?.items || response.data?.items || response.data || [];
+      setCartItems(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error("Error fetching cart:", err.response?.data || err.message);
       if (err.response?.status === 401) {
@@ -46,7 +47,8 @@ const Cart = () => {
         withCredentials: true,
       });
 
-      setCartItems((prev) => prev.filter((item) => (item._id || item.productId) !== id));
+      // Filter out the item locally to update UI instantly
+      setCartItems((prev) => prev.filter((item) => item._id !== id && item.productId !== id));
     } catch (err) {
       console.error("Error removing item:", err.response?.data || err.message);
     }
@@ -79,7 +81,7 @@ const Cart = () => {
 
   // Navigate to Product Details
   const navigateToDetails = (item) => {
-    const itemId = item.productId || item._id;
+    const itemId = item.productId || item._id || item.id;
     if (itemId) {
       navigate(`/product/${itemId}`, { state: { product: item } });
     }
@@ -119,8 +121,8 @@ const Cart = () => {
                   const itemPrice = item.price || 99;
                   const itemQuantity = item.quantity || 1;
 
-                  // Safely extract the image depending on how the backend populates data
-                  const imageToLoad = item.img || item.bottleImage || item?.productId?.img;
+                  // Safely extract the image depending on backend population
+                  const imageToLoad = item.img || item.bottleImage || item.displayImage || item?.productId?.img;
 
                   return (
                     <motion.div
@@ -177,7 +179,7 @@ const Cart = () => {
 
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={(e) => removeFromCart(itemId, e)}
+                            onClick={(e) => removeFromCart(item._id || itemId, e)}
                             className="p-3 md:p-4 text-gray-500 bg-black/40 hover:text-red-500 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-xl md:rounded-2xl transition-all duration-300"
                             title="Remove item"
                           >
