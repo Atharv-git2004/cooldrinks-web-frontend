@@ -8,25 +8,17 @@ const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
 
-  // API Base URL
+  // API Base URL - Update to "http://localhost:5000" if you are testing locally
   const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
-  // ടോക്കൺ എടുക്കാൻ
-  const getToken = () => localStorage.getItem("token");
-
-  // കാർട്ട് ഡാറ്റ എടുക്കാനുള്ള ഫംഗ്ഷൻ
+  // Fetch Cart Data
   const fetchCart = async () => {
     try {
-      const token = getToken();
-
-      if (!token) {
-        console.log("No token found. User might not be logged in.");
-        return;
-      }
+      const token = localStorage.getItem("token");
 
       const response = await axios.get(`${API_BASE_URL}/api/cart`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true, // Crucial for cookie-based auth
       });
 
       setCartItems(response.data.items || response.data || []);
@@ -41,60 +33,59 @@ const Cart = () => {
 
   useEffect(() => {
     fetchCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // റിമൂവ് ഫംഗ്ഷൻ
+  // Remove Item from Cart
   const removeFromCart = async (id, e) => {
     e.stopPropagation();
     try {
-      const token = getToken();
+      const token = localStorage.getItem("token");
       await axios.delete(`${API_BASE_URL}/api/cart/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       });
-      setCartItems((prev) => prev.filter((item) => (item._id || item.id || item.productId) !== id));
+
+      setCartItems((prev) => prev.filter((item) => (item._id || item.productId) !== id));
     } catch (err) {
       console.error("Error removing item:", err.response?.data || err.message);
     }
   };
 
-  // 🟢 ഇമേജ് ലോഡ് ആവാത്ത പ്രശ്നം പൂർണ്ണമായി പരിഹരിച്ച ഫംഗ്ഷൻ
+  // Image Formatting Logic
   const getProductImage = (img) => {
     if (!img) return "/placeholder.png";
 
     let imageUrl = img;
 
-    // 1. പഴയ Localhost ലിങ്ക് ആണെങ്കിൽ അത് Render URL ആക്കി മാറ്റുന്നു
     if (typeof imageUrl === "string" && imageUrl.includes("localhost:5000")) {
       imageUrl = imageUrl.replace("http://localhost:5000", API_BASE_URL);
     }
 
-    // 2. പൂർണ്ണമായ URL ആണെങ്കിൽ നേരിട്ട് കൊടുക്കുന്നു
     if (imageUrl.startsWith("http") || imageUrl.startsWith("data:")) {
       return imageUrl;
     }
 
-    // 3. /uploads/ എന്ന് തന്നെ തുടങ്ങുന്നുണ്ടെങ്കിൽ ഡബിൾ സ്ലാഷ് ഒഴിവാക്കാൻ
     if (imageUrl.startsWith("/uploads/")) {
       return `${API_BASE_URL}${imageUrl}`;
     }
 
-    // 4. വെറും / ആണെങ്കിൽ
     if (imageUrl.startsWith("/")) {
       return `${API_BASE_URL}/uploads${imageUrl}`;
     }
 
-    // 5. വെറും ഫയലിന്റെ പേര് മാത്രമാണെങ്കിൽ
     return `${API_BASE_URL}/uploads/${imageUrl}`;
   };
 
+  // Navigate to Product Details
   const navigateToDetails = (item) => {
-    const itemId = item._id || item.id || item.productId;
+    const itemId = item.productId || item._id;
     if (itemId) {
       navigate(`/product/${itemId}`, { state: { product: item } });
     }
   };
 
+  // Calculate Total Price
   const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 99) * (item.quantity || 1), 0);
 
   return (
@@ -123,12 +114,12 @@ const Cart = () => {
             <div className="space-y-4 md:space-y-6">
               <AnimatePresence>
                 {cartItems.map((item) => {
-                  const itemId = item._id || item.id || item.productId;
+                  const itemId = item.productId || item._id;
                   const itemColor = item.bgColor || "#22c55e";
                   const itemPrice = item.price || 99;
                   const itemQuantity = item.quantity || 1;
 
-                  // ഡാറ്റാബേസിൽ പല രീതിയിൽ സേവ് ആയ ഇമേജുകൾ കൃത്യമായി എടുക്കാൻ
+                  // Safely extract the image depending on how the backend populates data
                   const imageToLoad = item.img || item.bottleImage || item?.productId?.img;
 
                   return (
