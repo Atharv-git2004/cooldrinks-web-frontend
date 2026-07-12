@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiMinus, FiPlus, FiHeart, FiArrowLeft, FiShoppingCart, FiCreditCard } from "react-icons/fi";
-import axios from "axios"; // 🟢 Axios import ചെയ്തു
+import axios from "axios";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -14,6 +14,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(!product);
   const [error, setError] = useState(null);
 
+  // ബാക്കെൻഡ് URL - നിങ്ങൾ ലോക്കലിൽ ആണ് ടെസ്റ്റ് ചെയ്യുന്നതെങ്കിൽ ഇത് "http://localhost:5000" എന്ന് മാറ്റുക
   const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
   useEffect(() => {
@@ -71,16 +72,24 @@ const ProductDetail = () => {
     );
   }
 
+  // 🟢 IMAGE FIX: ഇമേജ് കൃത്യമായി ബാക്കെൻഡിൽ നിന്നും ലോഡ് ചെയ്യാൻ
   const getProductImage = (prod) => {
     if (prod.displayImage) return prod.displayImage;
     const img = prod.bottleImage || prod.img;
 
     if (!img) return "/placeholder.png";
 
-    if (img.startsWith("http") || img.startsWith("/") || img.startsWith("data:")) {
+    // ഇമേജ് ലിങ്ക് http അല്ലെങ്കിൽ data എന്ന് തുടങ്ങുന്നുണ്ടെങ്കിൽ അത് തന്നെ ഉപയോഗിക്കുക
+    if (img.startsWith("http") || img.startsWith("data:")) {
       return img;
     }
 
+    // ഇമേജ് ലിങ്ക് '/' വെച്ചാണ് തുടങ്ങുന്നതെങ്കിൽ (ഉദാഹരണത്തിന്: /uploads/sprite.jpg)
+    if (img.startsWith("/")) {
+      return `${API_BASE_URL}${img}`;
+    }
+
+    // ബാക്കിയുള്ളവയ്ക്ക് /uploads/ ചേർത്ത് നൽകുക
     return `${API_BASE_URL}/uploads/${img}`;
   };
 
@@ -94,11 +103,10 @@ const ProductDetail = () => {
     if (quantity > 1) setQuantity((prev) => prev - 1);
   };
 
-  // 🟢 1. ADD TO CART LOGIC (Backend API ഉപയോഗിച്ച് മാറ്റി)
+  // 🟢 1. ADD TO CART LOGIC
   const handleAddToCart = async (showAlert = true) => {
     const token = localStorage.getItem("token");
-    
-    // ലോഗിൻ ചെയ്തിട്ടില്ലെങ്കിൽ ലോഗിൻ പേജിലേക്ക് വിടുക
+
     if (!token) {
       alert("Please login to add items to the cart!");
       navigate("/login");
@@ -107,35 +115,31 @@ const ProductDetail = () => {
 
     try {
       const productId = product._id || product.id || id;
-      
-      // ബാക്കെൻഡിലേക്ക് അയക്കുന്ന ഡാറ്റ
+
       const payload = {
         productId: productId,
         quantity: quantity,
         price: productPrice,
-        // ബാക്കെൻഡ് മോഡൽ അനുസരിച്ച് ആവശ്യമെങ്കിൽ താഴെയുള്ളവയും അയക്കാം
         title: product.title,
         img: product.img || product.bottleImage,
-        bgColor: bgColor
+        bgColor: bgColor,
       };
 
       await axios.post(`${API_BASE_URL}/api/cart`, payload, {
         headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        withCredentials: true,
       });
 
       if (showAlert) {
         alert(`${product.title || "Product"} added to Cart! 🛒`);
       }
-      
-      // Navbar അപ്ഡേറ്റ് ചെയ്യാൻ വേണ്ടി കാർട്ടിലേക്ക് പോകുമ്പോൾ കൗണ്ട് മാറും
     } catch (err) {
       console.error("Error adding to cart:", err);
       alert(err.response?.data?.message || "Failed to add to cart");
     }
   };
 
-  // 🟢 2. WISHLIST LOGIC (Backend API ഉപയോഗിച്ച് മാറ്റി)
+  // 🟢 2. WISHLIST LOGIC
   const handleWishlist = async () => {
     const token = localStorage.getItem("token");
 
@@ -148,10 +152,14 @@ const ProductDetail = () => {
     try {
       const productId = product._id || product.id || id;
 
-      await axios.post(`${API_BASE_URL}/api/wishlist`, { productId: productId }, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
-      });
+      await axios.post(
+        `${API_BASE_URL}/api/wishlist`,
+        { productId: productId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        },
+      );
 
       alert(`${product.title || "Product"} added to Wishlist! ❤️`);
     } catch (err) {
@@ -162,7 +170,6 @@ const ProductDetail = () => {
 
   // 3. ORDER NOW LOGIC
   const handleOrderNow = async () => {
-    // കാർട്ടിലേക്ക് ആഡ് ചെയ്ത ശേഷം മാത്രം ചെക്ക്ഔട്ടിലേക്ക് പോകുക
     await handleAddToCart(false);
     navigate("/checkout");
   };
@@ -178,7 +185,7 @@ const ProductDetail = () => {
       </button>
 
       <div className="grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left Side: Image with floating animation */}
+        {/* Left Side: Image */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
