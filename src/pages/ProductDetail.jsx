@@ -14,7 +14,6 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(!product);
   const [error, setError] = useState(null);
 
-  // ബാക്കെൻഡ് URL - നിങ്ങൾ ലോക്കലിൽ ആണ് ടെസ്റ്റ് ചെയ്യുന്നതെങ്കിൽ ഇത് "http://localhost:5000" എന്ന് മാറ്റുക
   const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
   useEffect(() => {
@@ -22,21 +21,12 @@ const ProductDetail = () => {
       try {
         setLoading(true);
         setError(null);
-
         const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
-
-        if (!response.ok) {
-          throw new Error(`Product not found (Status: ${response.status})`);
-        }
-
+        if (!response.ok) throw new Error(`Product not found`);
         const data = await response.json();
         setProduct(data);
       } catch (err) {
-        console.error("Fetch Error:", err.message);
-
-        if (!location.state?.product) {
-          setError(err.message);
-        }
+        if (!location.state?.product) setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -49,47 +39,29 @@ const ProductDetail = () => {
     }
   }, [id, product, location.state]);
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="h-screen flex items-center justify-center text-green-500 bg-[#0a0a0a] font-black uppercase italic tracking-widest text-xl">
-        Loading Product...
+      <div className="h-screen flex items-center justify-center text-green-500 bg-[#0a0a0a] font-black uppercase italic">
+        Loading...
       </div>
     );
-  }
 
-  if (error || !product) {
+  if (error || !product)
     return (
       <div className="h-screen flex flex-col items-center justify-center text-white bg-[#0a0a0a]">
         <h1 className="text-4xl font-black mb-4">Product Not Found!</h1>
-        <p className="text-gray-400 mb-6 text-sm">Failed to load product details from the database.</p>
-        <button
-          onClick={() => navigate(-1)}
-          className="text-green-500 underline uppercase tracking-widest text-xs font-bold"
-        >
+        <button onClick={() => navigate(-1)} className="text-green-500 underline">
           Go Back
         </button>
       </div>
     );
-  }
 
-  // 🟢 IMAGE FIX: ഇമേജ് കൃത്യമായി ബാക്കെൻഡിൽ നിന്നും ലോഡ് ചെയ്യാൻ
   const getProductImage = (prod) => {
     if (prod.displayImage) return prod.displayImage;
-    const img = prod.bottleImage || prod.img;
-
+    const img = prod.img || prod.bottleImage;
     if (!img) return "/placeholder.png";
-
-    // ഇമേജ് ലിങ്ക് http അല്ലെങ്കിൽ data എന്ന് തുടങ്ങുന്നുണ്ടെങ്കിൽ അത് തന്നെ ഉപയോഗിക്കുക
-    if (img.startsWith("http") || img.startsWith("data:")) {
-      return img;
-    }
-
-    // ഇമേജ് ലിങ്ക് '/' വെച്ചാണ് തുടങ്ങുന്നതെങ്കിൽ (ഉദാഹരണത്തിന്: /uploads/sprite.jpg)
-    if (img.startsWith("/")) {
-      return `${API_BASE_URL}${img}`;
-    }
-
-    // ബാക്കിയുള്ളവയ്ക്ക് /uploads/ ചേർത്ത് നൽകുക
+    if (img.startsWith("http") || img.startsWith("data:")) return img;
+    if (img.startsWith("/")) return `${API_BASE_URL}${img}`;
     return `${API_BASE_URL}/uploads/${img}`;
   };
 
@@ -103,12 +75,11 @@ const ProductDetail = () => {
     if (quantity > 1) setQuantity((prev) => prev - 1);
   };
 
-  // 🟢 1. ADD TO CART LOGIC
+  // 🟢 ADD TO CART (Payload Fix)
   const handleAddToCart = async (showAlert = true) => {
     const token = localStorage.getItem("token");
-
     if (!token) {
-      alert("Please login to add items to the cart!");
+      alert("Please login!");
       navigate("/login");
       return;
     }
@@ -116,12 +87,15 @@ const ProductDetail = () => {
     try {
       const productId = product._id || product.id || id;
 
+      // ഇമേജ് ഡാറ്റ കൃത്യമായി എടുക്കുന്നു
+      const imagePath = product.img || product.bottleImage || product.displayImage || "";
+
       const payload = {
         productId: productId,
         quantity: quantity,
         price: productPrice,
         title: product.title,
-        img: product.img || product.bottleImage,
+        img: imagePath, // ഇതാണ് പ്രധാനപ്പെട്ട മാറ്റം
         bgColor: bgColor,
       };
 
@@ -130,175 +104,111 @@ const ProductDetail = () => {
         withCredentials: true,
       });
 
-      if (showAlert) {
-        alert(`${product.title || "Product"} added to Cart! 🛒`);
-      }
+      if (showAlert) alert(`${product.title} added to Cart! 🛒`);
     } catch (err) {
-      console.error("Error adding to cart:", err);
+      console.error("Cart Error:", err);
       alert(err.response?.data?.message || "Failed to add to cart");
     }
   };
 
-  // 🟢 2. WISHLIST LOGIC
   const handleWishlist = async () => {
     const token = localStorage.getItem("token");
-
     if (!token) {
-      alert("Please login to add items to your Wishlist!");
       navigate("/login");
       return;
     }
-
     try {
       const productId = product._id || product.id || id;
-
       await axios.post(
         `${API_BASE_URL}/api/wishlist`,
-        { productId: productId },
+        { productId },
         {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         },
       );
-
-      alert(`${product.title || "Product"} added to Wishlist! ❤️`);
+      alert("Added to Wishlist! ❤️");
     } catch (err) {
-      console.error("Error adding to wishlist:", err);
-      alert(err.response?.data?.message || "Failed to add to wishlist");
+      alert("Failed to add to wishlist");
     }
-  };
-
-  // 3. ORDER NOW LOGIC
-  const handleOrderNow = async () => {
-    await handleAddToCart(false);
-    navigate("/checkout");
   };
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-6xl mx-auto min-h-screen text-white">
-      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-12 flex items-center gap-2 text-gray-400 hover:text-green-500 transition-colors duration-300 font-bold uppercase text-xs tracking-[0.2em]"
+        className="mb-12 flex items-center gap-2 text-gray-400 hover:text-green-500 transition-colors font-bold uppercase text-xs tracking-[0.2em]"
       >
         <FiArrowLeft /> Back
       </button>
 
       <div className="grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left Side: Image */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative flex justify-center items-center bg-[#111111] border border-white/5 rounded-[60px] p-10 group"
-        >
-          <div
-            className="absolute w-48 h-48 blur-[60px] rounded-full transition-all duration-700 transform-gpu opacity-30"
-            style={{ backgroundColor: bgColor }}
-          />
-
-          <motion.img
-            initial={{ y: 10 }}
-            animate={{ y: -10 }}
-            transition={{ repeat: Infinity, duration: 3, repeatType: "reverse", ease: "easeInOut" }}
+        <motion.div className="relative flex justify-center items-center bg-[#111111] border border-white/5 rounded-[60px] p-10 group">
+          <div className="absolute w-48 h-48 blur-[60px] rounded-full opacity-30" style={{ backgroundColor: bgColor }} />
+          <img
             src={productImage}
-            alt={product.title || "Product"}
-            onError={(e) => {
-              e.target.src = "/placeholder.png";
-            }}
-            className="h-[400px] md:h-[550px] object-contain drop-shadow-2xl z-10 transform-gpu"
+            alt={product.title}
+            className="h-[400px] md:h-[550px] object-contain drop-shadow-2xl z-10"
           />
         </motion.div>
 
-        {/* Right Side: Info & Actions */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-8"
-        >
-          <div className="space-y-4">
+        <motion.div className="space-y-8">
+          <div>
             <span className="font-black uppercase text-xs tracking-[0.3em] block" style={{ color: bgColor }}>
               {product.tagline || "Pure Refreshment"}
             </span>
-            <h1 className="text-5xl md:text-8xl font-black uppercase text-white tracking-tighter leading-[0.9]">
-              {product.title || "Flavor"}
-            </h1>
+            <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter">{product.title || "Flavor"}</h1>
             <h3 className="text-xl md:text-2xl font-bold text-gray-400 italic">{product.subtitle || "Premium Drink"}</h3>
           </div>
 
-          <p className="text-gray-400 leading-relaxed text-base md:text-lg max-w-md">
-            {product.description ||
-              `Experience the intense burst of ${product.title || "refreshment"}. Specially crafted for those who seek the ultimate experience in every sip. Non-alcoholic and 100% natural.`}
+          <p className="text-gray-400 text-lg max-w-md">
+            {product.description || "Experience the intense burst of refreshment."}
           </p>
 
-          {/* Pricing & Quantity */}
           <div className="flex flex-wrap items-end gap-12 pt-4">
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-2">Price Per Bottle</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl md:text-6xl font-black" style={{ color: bgColor }}>
-                  ₹{productPrice}
-                </span>
-                {originalPrice > productPrice && (
-                  <span className="text-gray-600 line-through font-bold text-lg">₹{originalPrice}</span>
-                )}
-              </div>
+              <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-2">Price</span>
+              <span className="text-5xl font-black" style={{ color: bgColor }}>
+                ₹{productPrice}
+              </span>
             </div>
-
             <div className="flex flex-col">
               <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-2">Quantity</span>
-              <div className="flex items-center border border-white/10 rounded-[1.5rem] overflow-hidden bg-[#1a1a1a]">
-                <button onClick={handleDecrease} className="px-6 py-4 hover:bg-white/10 transition-colors">
+              <div className="flex items-center border border-white/10 rounded-[1.5rem] bg-[#1a1a1a]">
+                <button onClick={handleDecrease} className="px-6 py-4 hover:bg-white/10">
                   <FiMinus />
                 </button>
-                <span className="px-6 py-2 text-2xl font-black min-w-[60px] text-center">{quantity}</span>
-                <button onClick={handleIncrease} className="px-6 py-4 hover:bg-white/10 transition-colors">
+                <span className="px-6 py-2 text-2xl font-black">{quantity}</span>
+                <button onClick={handleIncrease} className="px-6 py-4 hover:bg-white/10">
                   <FiPlus />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-wrap gap-4 pt-8">
             <button
               onClick={() => handleAddToCart(true)}
               style={{ backgroundColor: bgColor }}
-              className="flex-1 min-w-[150px] text-black font-black py-4 px-6 rounded-[2rem] hover:opacity-80 transition-opacity text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3"
+              className="flex-1 text-black font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest flex items-center justify-center gap-3"
             >
-              <FiShoppingCart className="text-xl" /> Add to Cart
+              <FiShoppingCart /> Add to Cart
             </button>
-
             <button
-              onClick={handleOrderNow}
-              className="flex-1 min-w-[150px] border-2 border-white text-white font-black py-4 px-6 rounded-[2rem] hover:bg-white hover:text-black transition-colors text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3"
+              onClick={() => {
+                handleAddToCart(false);
+                navigate("/checkout");
+              }}
+              className="flex-1 border-2 border-white text-white font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest"
             >
-              <FiCreditCard className="text-xl" /> Order Now
+              Order Now
             </button>
-
             <button
               onClick={handleWishlist}
-              className="p-4 px-6 border border-white/10 rounded-[2rem] hover:bg-pink-500 hover:border-pink-500 hover:text-white text-2xl text-gray-400 transition-colors flex items-center justify-center"
-              title="Add to Wishlist"
+              className="p-4 px-6 border border-white/10 rounded-[2rem] text-2xl text-gray-400 hover:text-pink-500"
             >
               <FiHeart />
             </button>
-          </div>
-
-          {/* Social Proof */}
-          <div className="flex items-center gap-4 pt-6 border-t border-white/5">
-            <div className="flex -space-x-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="w-10 h-10 rounded-full border-4 border-[#0a0a0a] bg-gradient-to-br from-gray-700 to-gray-900"
-                />
-              ))}
-            </div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold leading-tight">
-              Loved by <span className="text-white">10,000+</span> <br /> Refreshment Seekers
-            </p>
           </div>
         </motion.div>
       </div>
