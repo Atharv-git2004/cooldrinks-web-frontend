@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiMinus, FiPlus, FiHeart, FiArrowLeft, FiShoppingCart, FiCreditCard } from "react-icons/fi";
+import axios from "axios"; // 🟢 Axios import ചെയ്തു
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -13,7 +14,6 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(!product);
   const [error, setError] = useState(null);
 
-  // Set your Backend URL here
   const API_BASE_URL = "https://cooldrinkbackend.onrender.com";
 
   useEffect(() => {
@@ -22,7 +22,6 @@ const ProductDetail = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch product from backend API
         const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
 
         if (!response.ok) {
@@ -34,7 +33,6 @@ const ProductDetail = () => {
       } catch (err) {
         console.error("Fetch Error:", err.message);
 
-        // Fallback: If the API fails (like the 500 error for mock IDs), check if we have it in state
         if (!location.state?.product) {
           setError(err.message);
         }
@@ -43,7 +41,6 @@ const ProductDetail = () => {
       }
     };
 
-    // If product is not already loaded from state, or the ID doesn't match, fetch it
     if (!product || (product._id !== id && product.id !== id)) {
       fetchProduct();
     } else {
@@ -74,19 +71,16 @@ const ProductDetail = () => {
     );
   }
 
-  // Determine correct image URL (Handling both static URLs and Multer uploads)
   const getProductImage = (prod) => {
     if (prod.displayImage) return prod.displayImage;
     const img = prod.bottleImage || prod.img;
 
     if (!img) return "/placeholder.png";
 
-    // Check if it's already a full URL or a local absolute path
     if (img.startsWith("http") || img.startsWith("/") || img.startsWith("data:")) {
       return img;
     }
 
-    // If it's just a filename from Multer, append the backend URL
     return `${API_BASE_URL}/uploads/${img}`;
   };
 
@@ -100,64 +94,76 @@ const ProductDetail = () => {
     if (quantity > 1) setQuantity((prev) => prev - 1);
   };
 
-  // 1. ADD TO CART LOGIC (Updated to accept showAlert parameter)
-  const handleAddToCart = (showAlert = true) => {
-    const currentCart = JSON.parse(localStorage.getItem("cart")) || [];
-    const productId = product._id || product.id || id;
-    const existingItem = currentCart.find((item) => (item._id || item.id) === productId);
+  // 🟢 1. ADD TO CART LOGIC (Backend API ഉപയോഗിച്ച് മാറ്റി)
+  const handleAddToCart = async (showAlert = true) => {
+    const token = localStorage.getItem("token");
+    
+    // ലോഗിൻ ചെയ്തിട്ടില്ലെങ്കിൽ ലോഗിൻ പേജിലേക്ക് വിടുക
+    if (!token) {
+      alert("Please login to add items to the cart!");
+      navigate("/login");
+      return;
+    }
 
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      currentCart.push({
-        id: productId,
-        _id: productId,
-        title: product.title || "Premium Flavor",
-        price: productPrice,
+    try {
+      const productId = product._id || product.id || id;
+      
+      // ബാക്കെൻഡിലേക്ക് അയക്കുന്ന ഡാറ്റ
+      const payload = {
+        productId: productId,
         quantity: quantity,
-        img: product.img || product.bottleImage,
-        bgColor: bgColor,
-      });
-    }
-
-    localStorage.setItem("cart", JSON.stringify(currentCart));
-    window.dispatchEvent(new Event("storage"));
-
-    // showAlert 'true' ആണെങ്കിൽ മാത്രം Alert കാണിക്കുക
-    if (showAlert) {
-      alert(`${product.title || "Product"} added to Cart! 🛒`);
-    }
-  };
-
-  // 2. WISHLIST LOGIC
-  const handleWishlist = () => {
-    const currentWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    const productId = product._id || product.id || id;
-    const existingItem = currentWishlist.find((item) => (item._id || item.id) === productId);
-
-    if (!existingItem) {
-      currentWishlist.push({
-        id: productId,
-        _id: productId,
-        title: product.title || "Premium Flavor",
         price: productPrice,
+        // ബാക്കെൻഡ് മോഡൽ അനുസരിച്ച് ആവശ്യമെങ്കിൽ താഴെയുള്ളവയും അയക്കാം
+        title: product.title,
         img: product.img || product.bottleImage,
-        bgColor: bgColor,
+        bgColor: bgColor
+      };
+
+      await axios.post(`${API_BASE_URL}/api/cart`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
       });
-      localStorage.setItem("wishlist", JSON.stringify(currentWishlist));
-      window.dispatchEvent(new Event("storage")); // Notify other components
-      alert(`${product.title || "Product"} added to Wishlist! ❤️`);
-    } else {
-      alert(`${product.title || "Product"} is already in your Wishlist!`);
+
+      if (showAlert) {
+        alert(`${product.title || "Product"} added to Cart! 🛒`);
+      }
+      
+      // Navbar അപ്ഡേറ്റ് ചെയ്യാൻ വേണ്ടി കാർട്ടിലേക്ക് പോകുമ്പോൾ കൗണ്ട് മാറും
+    } catch (err) {
+      console.error("Error adding to cart:", err);
+      alert(err.response?.data?.message || "Failed to add to cart");
     }
   };
 
-  // 3. ORDER NOW LOGIC (Updated to bypass alert)
-  const handleOrderNow = () => {
-    // ഇവിടെ 'false' കൊടുക്കുന്നത് കൊണ്ട് Alert വരില്ല, നേരെ Cart-ൽ കയറും
-    handleAddToCart(false);
+  // 🟢 2. WISHLIST LOGIC (Backend API ഉപയോഗിച്ച് മാറ്റി)
+  const handleWishlist = async () => {
+    const token = localStorage.getItem("token");
 
-    // Alert വരാത്തതുകൊണ്ട് നേരിട്ട് Checkout പേജിലേക്ക് പോകും
+    if (!token) {
+      alert("Please login to add items to your Wishlist!");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const productId = product._id || product.id || id;
+
+      await axios.post(`${API_BASE_URL}/api/wishlist`, { productId: productId }, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
+      });
+
+      alert(`${product.title || "Product"} added to Wishlist! ❤️`);
+    } catch (err) {
+      console.error("Error adding to wishlist:", err);
+      alert(err.response?.data?.message || "Failed to add to wishlist");
+    }
+  };
+
+  // 3. ORDER NOW LOGIC
+  const handleOrderNow = async () => {
+    // കാർട്ടിലേക്ക് ആഡ് ചെയ്ത ശേഷം മാത്രം ചെക്ക്ഔട്ടിലേക്ക് പോകുക
+    await handleAddToCart(false);
     navigate("/checkout");
   };
 
