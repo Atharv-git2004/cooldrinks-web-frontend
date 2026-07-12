@@ -23,7 +23,7 @@ const Navbar = () => {
       return;
     }
 
-    // 🟢 ലോക്കൽ സ്റ്റോറേജിൽ നിന്നും ടോക്കൺ എടുക്കുന്നു
+    // ലോക്കൽ സ്റ്റോറേജിൽ നിന്നും ടോക്കൺ എടുക്കുന്നു
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -33,7 +33,7 @@ const Navbar = () => {
     }
 
     try {
-      // 🟢 ബാക്കെൻഡിലേക്ക് ടോക്കൺ അയക്കാൻ config സെറ്റ് ചെയ്യുന്നു
+      // ബാക്കെൻഡിലേക്ക് ടോക്കൺ അയക്കാൻ config സെറ്റ് ചെയ്യുന്നു
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -41,14 +41,18 @@ const Navbar = () => {
         withCredentials: true,
       };
 
-      // രണ്ടും ഒരേസമയം ഫെച്ച് ചെയ്യാൻ Promise.all ഉപയോഗിക്കുന്നു
+      // 🟢 http://localhost:5000 മാറ്റി വെറും റൂട്ടുകൾ മാത്രം നൽകുന്നു
       const [cartRes, wishlistRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/cart", config),
-        axios.get("http://localhost:5000/api/wishlist", config),
+        axios.get("/api/cart", config),
+        axios.get("/api/wishlist", config),
       ]);
 
-      setCartCount(cartRes.data?.length || 0);
-      setWishlistCount(wishlistRes.data?.length || 0);
+      // 🟢 ഡാറ്റ ഒബ്ജക്റ്റ് ആണെങ്കിലും അറേ ആണെങ്കിലും സുരക്ഷിതമായി നീളം (length) എടുക്കുന്നു
+      const cartData = cartRes.data?.items || cartRes.data || [];
+      const wishlistData = wishlistRes.data?.items || wishlistRes.data || [];
+
+      setCartCount(cartData.length || 0);
+      setWishlistCount(wishlistData.length || 0);
     } catch (error) {
       // ടോക്കൺ എക്സ്പയർ ആവുകയോ മറ്റോ ചെയ്താൽ കൗണ്ട് സീറോ ആക്കുന്നു
       if (error.response && error.response.status === 401) {
@@ -204,7 +208,6 @@ const Navbar = () => {
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
-                          // എറർ വന്നാൽ ഡിഫോൾട്ട് ആയി ഒരു ഐക്കൺ കാണിക്കാൻ
                           e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
                         }}
                       />

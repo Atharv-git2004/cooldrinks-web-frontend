@@ -30,7 +30,10 @@ import ManageProducts from "./admin/ManageProducts";
 import HomeManager from "./admin/HomeManager";
 import ManageOrders from "./admin/ManageOrders";
 
-// 🟢 Axios Global Configuration: ആപ്പ് ലോഡ് ചെയ്യുമ്പോൾ ടോക്കൺ ഉണ്ടെങ്കിൽ ഡിഫോൾട്ട് ഹെഡറായി സെറ്റ് ചെയ്യുന്നു
+// 🟢 Axios Global Configuration: ബാക്കെൻഡ് യുആർഎല്ലും ക്രെഡൻഷ്യൽസും ഇവിടെ ആഗോളമായി സെറ്റ് ചെയ്യുന്നു
+axios.defaults.baseURL = "https://cooldrinkbackend.onrender.com";
+axios.defaults.withCredentials = true;
+
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
