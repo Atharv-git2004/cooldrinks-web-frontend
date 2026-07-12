@@ -20,7 +20,6 @@ const Cart = () => {
         withCredentials: true,
       });
 
-      // Robust check to handle different backend response structures
       const items = response.data?.cart?.items || response.data?.items || response.data || [];
       setCartItems(Array.isArray(items) ? items : []);
     } catch (err) {
@@ -47,52 +46,58 @@ const Cart = () => {
         withCredentials: true,
       });
 
-      // Filter out the item locally to update UI instantly
-      setCartItems((prev) => prev.filter((item) => item._id !== id && item.productId !== id));
+      setCartItems((prev) => prev.filter((item) => item._id !== id && item.productId?._id !== id && item.productId !== id));
     } catch (err) {
       console.error("Error removing item:", err.response?.data || err.message);
     }
   };
 
-  // Image Formatting Logic
-  const getProductImage = (img) => {
+  // 🌟 MAGIC FIX: Image Formatting Logic 🌟
+  const getProductImage = (item) => {
+    const img = item.img || item.bottleImage || item.displayImage || item?.productId?.img;
+    const title = (item.title || item?.productId?.title || "").toLowerCase();
+
+    // 1. ഹാർഡ്‌കോഡ് ചെയ്ത ഐറ്റങ്ങൾക്ക് ഡയറക്റ്റ് ഇമേജ് കൊടുക്കുന്നു (No Error!)
+    if (title.includes("sprite")) return "https://m.media-amazon.com/images/I/51v8nyxSOYL._SL1500_.jpg";
+    if (title.includes("fanta")) return "https://m.media-amazon.com/images/I/61b7l5x0YcL._SL1500_.jpg";
+    if (title.includes("welch")) return "https://m.media-amazon.com/images/I/81I-u8sI+ML._SL1500_.jpg";
+
     if (!img) return "/placeholder.png";
 
-    let imageUrl = img;
+    let imageUrl = typeof img === "string" ? img : String(img);
 
-    if (typeof imageUrl === "string" && imageUrl.includes("localhost:5000")) {
-      imageUrl = imageUrl.replace("http://localhost:5000", API_BASE_URL);
+    // 2. localhost എററുകൾ ബ്ലോക്ക് ചെയ്യുന്നു (Mixed Content Error ഫിക്സ്)
+    if (imageUrl.includes("localhost")) {
+      return "/placeholder.png";
     }
 
-    if (imageUrl.startsWith("http") || imageUrl.startsWith("data:")) {
+    // 3. HTTP നെ HTTPS ആക്കി മാറ്റുന്നു
+    if (imageUrl.startsWith("http://")) {
+      imageUrl = imageUrl.replace("http://", "https://");
+    }
+
+    if (imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
       return imageUrl;
     }
 
-    if (imageUrl.startsWith("/uploads/")) {
-      return `${API_BASE_URL}${imageUrl}`;
-    }
-
-    if (imageUrl.startsWith("/")) {
-      return `${API_BASE_URL}/uploads${imageUrl}`;
-    }
-
-    return `${API_BASE_URL}/uploads/${imageUrl}`;
+    return `${API_BASE_URL}/uploads/${imageUrl.replace(/^\//, "")}`;
   };
 
-  // Navigate to Product Details
   const navigateToDetails = (item) => {
-    const itemId = item.productId || item._id || item.id;
+    const itemId = item?.productId?._id || item.productId || item._id;
     if (itemId) {
       navigate(`/product/${itemId}`, { state: { product: item } });
     }
   };
 
-  // Calculate Total Price
-  const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 99) * (item.quantity || 1), 0);
+  const totalPrice = cartItems.reduce((acc, item) => {
+    const price = item.price || item?.productId?.price || 99;
+    const quantity = item.quantity || 1;
+    return acc + price * quantity;
+  }, 0);
 
   return (
     <div className="min-h-screen bg-[#030303] text-white pt-24 md:pt-32 pb-20 px-4 md:px-6 max-w-5xl mx-auto overflow-hidden">
-      {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10 md:mb-12 relative z-10">
         <button
           onClick={() => navigate(-1)}
@@ -116,13 +121,11 @@ const Cart = () => {
             <div className="space-y-4 md:space-y-6">
               <AnimatePresence>
                 {cartItems.map((item) => {
-                  const itemId = item.productId || item._id;
-                  const itemColor = item.bgColor || "#22c55e";
-                  const itemPrice = item.price || 99;
+                  const itemId = item?.productId?._id || item.productId || item._id;
+                  const itemTitle = item.title || item?.productId?.title || "Unknown Product";
+                  const itemColor = item.bgColor || item?.productId?.bgColor || "#22c55e";
+                  const itemPrice = item.price || item?.productId?.price || 99;
                   const itemQuantity = item.quantity || 1;
-
-                  // Safely extract the image depending on backend population
-                  const imageToLoad = item.img || item.bottleImage || item.displayImage || item?.productId?.img;
 
                   return (
                     <motion.div
@@ -135,18 +138,16 @@ const Cart = () => {
                       onClick={() => navigateToDetails(item)}
                       className="group flex flex-col sm:flex-row items-center justify-between p-4 md:p-6 bg-[#111111] border border-white/5 rounded-2xl md:rounded-[2rem] hover:border-white/20 hover:bg-[#151515] transition-all duration-300 cursor-pointer overflow-hidden relative"
                     >
-                      {/* Background Glow Effect */}
                       <div
                         className="absolute -left-20 -top-20 w-40 h-40 blur-[80px] rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"
                         style={{ backgroundColor: itemColor }}
                       />
 
                       <div className="flex w-full sm:w-auto items-center gap-4 md:gap-8 relative z-10">
-                        {/* Product Image */}
                         <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0 flex items-center justify-center p-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
                           <img
-                            src={getProductImage(imageToLoad)}
-                            alt={item.title || "Product Image"}
+                            src={getProductImage(item)}
+                            alt={itemTitle}
                             onError={(e) => {
                               e.target.src = "/placeholder.png";
                             }}
@@ -154,10 +155,9 @@ const Cart = () => {
                           />
                         </div>
 
-                        {/* Product Details */}
                         <div className="flex-1">
                           <h3 className="text-lg md:text-2xl font-black italic uppercase tracking-tight text-white mb-1 md:mb-2 group-hover:text-green-400 transition-colors line-clamp-1">
-                            {item.title || "Unknown Product"}
+                            {itemTitle}
                           </h3>
                           <div className="flex items-center gap-3">
                             <p className="text-base md:text-lg font-black" style={{ color: itemColor }}>
@@ -170,7 +170,6 @@ const Cart = () => {
                         </div>
                       </div>
 
-                      {/* Actions */}
                       <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4 mt-4 sm:mt-0 relative z-10 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
                         <div className="flex flex-col sm:items-end mr-2 md:mr-6">
                           <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Subtotal</span>
@@ -185,9 +184,6 @@ const Cart = () => {
                           >
                             <FiTrash2 size={20} />
                           </button>
-                          <div className="p-3 md:p-4 text-white/30 group-hover:text-white group-hover:bg-white/10 rounded-xl md:rounded-2xl transition-all duration-300 hidden sm:flex">
-                            <FiChevronRight size={20} />
-                          </div>
                         </div>
                       </div>
                     </motion.div>
