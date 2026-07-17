@@ -53,7 +53,7 @@ const Cart = () => {
     }
   };
 
-  // 🟢 IMAGE FORMATTING LOGIC (FIXED UPLOADS PATH ISSUE)
+  // 🟢 IMAGE FORMATTING LOGIC (PERFECTLY FIXED)
   const getProductImage = (item) => {
     const img = item?.productId?.img || item.img || item.bottleImage || item.displayImage;
     const title = (item?.productId?.title || item.title || "").toLowerCase();
@@ -67,28 +67,24 @@ const Cart = () => {
 
     let imageUrl = typeof img === "string" ? img : String(img);
 
-    // 2. localhost ഇമേജ് ലിങ്കുകൾ ഉണ്ടെങ്കിൽ ബ്ലോക്ക് ചെയ്യുന്നു
-    if (imageUrl.includes("localhost")) {
-      return "/placeholder.png";
+    // 2. ഡയറക്റ്റ് എക്സ്റ്റേണൽ ലിങ്ക് ആണെങ്കിൽ (http/https/data)
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("data:")) {
+      return imageUrl.replace("http://", "https://"); // HTTP മാറ്റുന്നു
     }
 
-    // 3. HTTP പ്രോട്ടോക്കോൾ HTTPS ആക്കുന്നു
-    if (imageUrl.startsWith("http://")) {
-      imageUrl = imageUrl.replace("http://", "https://");
-    }
-
-    // 4. ഡയറക്റ്റ് ലിങ്ക് ആണെങ്കിൽ അത് തന്നെ റിട്ടേൺ ചെയ്യുന്നു
-    if (imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
-      return imageUrl;
-    }
-
-    // 5. അഡ്മിൻ പാനലിൽ നിന്നുള്ള ചിത്രങ്ങൾ കൃത്യമായി എടുക്കാൻ (Double uploads/ ഒഴിവാക്കുന്നു)
-    const cleanPath = imageUrl.replace(/^\//, "");
-    if (cleanPath.startsWith("uploads/")) {
+    // 3. അഡ്മിൻ പാനലിൽ നിന്നും അപ്‌ലോഡ് ചെയ്ത ബാക്കെൻഡ് ചിത്രങ്ങൾ
+    if (imageUrl.includes("uploads/")) {
+      const cleanPath = imageUrl.replace(/^\//, ""); // മുന്നിലെ സ്ലാഷ് ഒഴിവാക്കുന്നു
       return `${API_BASE_URL}/${cleanPath}`;
     }
 
-    return `${API_BASE_URL}/uploads/${cleanPath}`;
+    // 4. ഫ്രണ്ട്എൻഡിലെ ലോക്കൽ ചിത്രങ്ങൾ (eg: "7up.png")
+    // അഡ്മിൻ ഇമേജും അല്ല, ഓൺലൈൻ ഇമേജും അല്ലെങ്കിൾ അത് ലോക്കൽ പബ്ലിക് ഫോൾഡറിലെ ഇമേജ് ആണ്
+    if (!imageUrl.startsWith("/drinks/")) {
+      return `/drinks/${imageUrl}`;
+    }
+
+    return imageUrl;
   };
 
   const navigateToDetails = (item) => {

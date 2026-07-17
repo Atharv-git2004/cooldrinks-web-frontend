@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, useLocation, Navigate, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
@@ -13,7 +13,6 @@ import BottomNav from "./components/layout/BottomNav";
 import Home from "./pages/Home";
 import Flavors from "./pages/Flavors";
 import About from "./pages/About";
-import Contact from "./pages/Contact";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
@@ -30,7 +29,7 @@ import ManageProducts from "./admin/ManageProducts";
 import HomeManager from "./admin/HomeManager";
 import ManageOrders from "./admin/ManageOrders";
 
-// 🟢 Axios Global Configuration: ബാക്കെൻഡ് യുആർഎല്ലും ക്രെഡൻഷ്യൽസും ഇവിടെ ആഗോളമായി സെറ്റ് ചെയ്യുന്നു
+// 🟢 Axios Global Configuration
 axios.defaults.baseURL = "https://cooldrinkbackend.onrender.com";
 axios.defaults.withCredentials = true;
 
@@ -79,6 +78,22 @@ const ProtectedRoute = () => {
 
 function App() {
   const location = useLocation();
+  // 🟢 AuthContext-ൽ നിന്നും login ഫംഗ്ഷൻ എടുക്കുന്നു
+  const { login } = useAuth();
+
+  // 💡 ഇവിടെയാണ് മാജിക്! പേജ് റീഫ്രഷ് ചെയ്യുമ്പോൾ ലോഗൗട്ട് ആകാതിരിക്കാനുള്ള കോഡ്:
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (savedToken && savedUser) {
+      // Axios-ൽ ടോക്കൺ സെറ്റ് ചെയ്യുന്നു
+      axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
+      // ലോക്കൽ സ്റ്റോറേജിലെ യൂസർ ഡാറ്റ എടുത്ത് തിരികെ ലോഗിൻ സ്റ്റേറ്റിലേക്ക് മാറ്റുന്നു
+      login(JSON.parse(savedUser));
+    }
+  }, []);
+  // 💡 (Empty array `[]` കൊടുത്തതുകൊണ്ട് പേജ് ആദ്യം ലോഡ് ചെയ്യുമ്പോൾ മാത്രം ഇത് റൺ ആകും)
 
   const isAdminPath = location.pathname.startsWith("/admin");
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
@@ -168,14 +183,6 @@ function App() {
               element={
                 <PageWrapper>
                   <About />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <PageWrapper>
-                  <Contact />
                 </PageWrapper>
               }
             />

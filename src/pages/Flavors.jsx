@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FiShoppingCart, FiHeart, FiArrowRight } from "react-icons/fi";
 import Lottie from "lottie-react";
@@ -60,6 +60,7 @@ const Flavors = () => {
         setProducts([...formattedLocalData, ...backendProducts]);
       } catch (error) {
         console.error("Error fetching products from backend:", error);
+        // Error വന്നാൽ ലോക്കൽ ഡാറ്റ മാത്രം കാണിക്കുക
         const formattedLocalData = flavorsData.map((item, index) => ({
           ...item,
           id: item.id || `local-${index}`,
@@ -127,12 +128,11 @@ const Flavors = () => {
 
     // നിങ്ങളുടെ ലോഗിൻ ടോക്കൺ എടുക്കുന്നു (ഉണ്ടെങ്കിൽ)
     const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user"); // യൂസർ ലോഗിൻ ആണോ എന്ന് ചെക്ക് ചെയ്യാൻ
+    const user = localStorage.getItem("user");
 
-    // ടോക്കണും Credentials-ഉം വെച്ച് ഹെഡർ സെറ്റ് ചെയ്യുന്നു
     const config = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-      withCredentials: true, // 🔥 Google ലോഗിൻ/കുക്കി സെഷൻ വഴി ലോഗിൻ ചെയ്താലും വർക്ക് ചെയ്യാൻ
+      withCredentials: true,
     };
 
     if (isAlreadyWishlisted) {
@@ -161,13 +161,9 @@ const Flavors = () => {
       localStorage.setItem("wishlist", JSON.stringify([...existingWishlist, cartFormatItem]));
       setWishlistedItems((prev) => [...prev, item.id]);
 
-      // ലോഗിൻ ചെയ്ത യൂസർ ആണെങ്കിൽ മാത്രം ബാക്കെൻഡിലേക്ക് റിക്വസ്റ്റ് അയക്കുന്നു
       if (token || user) {
         try {
-          const payload = {
-            item: cartFormatItem,
-          };
-          // കുക്കികളും ടോക്കണും (config) ഉൾപ്പെടുത്തി പോസ്റ്റ് ചെയ്യുന്നു
+          const payload = { item: cartFormatItem };
           await axios.post("https://cooldrinkbackend.onrender.com/api/wishlist/add", payload, config);
         } catch (error) {
           console.error("Error adding to wishlist:", error.response?.data || error.message);
@@ -175,11 +171,9 @@ const Flavors = () => {
       }
     }
 
-    // ഫംഗ്ഷൻ തീർന്നതിന് ശേഷം ലോഡിങ് മാറ്റുന്നു
     setLoadingItems((prev) => ({ ...prev, [item.id]: false }));
   };
 
-  // Optimized Framer Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
@@ -250,6 +244,7 @@ const Flavors = () => {
           {products.map((item) => {
             const itemColor = item.bgColor || "#22c55e";
             const isWishlisted = wishlistedItems.includes(item.id);
+
             return (
               <motion.div
                 key={item.id}
@@ -257,7 +252,6 @@ const Flavors = () => {
                 whileHover={{ y: -10 }}
                 className="group relative bg-[#131313] border border-white/5 p-5 md:p-10 rounded-[30px] md:rounded-[50px] flex flex-col items-center transition-all duration-300 hover:border-green-500/30 hover:bg-[#1a1a1a]"
               >
-                {/* 🟢 Wishlist Button */}
                 <button
                   onClick={(e) => handleToggleWishlist(e, item)}
                   disabled={loadingItems[item.id]}
@@ -271,13 +265,10 @@ const Flavors = () => {
                   }`}
                 >
                   <FiHeart
-                    className={`text-lg md:text-2xl transition-all duration-300 ${
-                      isWishlisted ? "fill-current" : "group-hover/heart:fill-current group-hover/heart:text-white"
-                    }`}
+                    className={`text-lg md:text-2xl transition-all duration-300 ${isWishlisted ? "fill-current" : "group-hover/heart:fill-current group-hover/heart:text-white"}`}
                   />
                 </button>
 
-                {/* Product Image Area */}
                 <div
                   className="h-48 md:h-80 w-full flex justify-center items-center mb-6 md:mb-10 cursor-pointer relative"
                   onClick={() => handleViewDetails(item)}
@@ -296,7 +287,6 @@ const Flavors = () => {
                   />
                 </div>
 
-                {/* Title & Price */}
                 <div className="text-center space-y-2 md:space-y-3 mb-6 md:mb-8 w-full relative z-20">
                   <h3 className="text-xl md:text-4xl font-black italic uppercase tracking-tighter group-hover:text-green-400 transition-colors duration-300 truncate w-full">
                     {item.title}
@@ -308,7 +298,6 @@ const Flavors = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex flex-col gap-2.5 w-full relative z-30">
                   <button
                     onClick={() => handleViewDetails(item)}

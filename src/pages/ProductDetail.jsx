@@ -10,7 +10,20 @@ const ProductDetail = () => {
   const location = useLocation();
   const [quantity, setQuantity] = useState(1);
 
-  const [product, setProduct] = useState(location.state?.product || null);
+  // 💡 FIX 1: കാർട്ടിൽ നിന്ന് വരുന്ന ഡാറ്റ കൃത്യമായി എക്സ്ട്രാക്റ്റ് ചെയ്യുന്നു
+  const getInitialProduct = () => {
+    const item = location.state?.product;
+    if (!item) return null;
+
+    // കാർട്ടിലെ productId ഒരു ഒബ്ജക്റ്റ് ആണെങ്കിൽ (അതിലാണ് title, img ഒക്കെയുള്ളത്) അതെടുക്കുക
+    if (item.productId && typeof item.productId === "object") {
+      return item.productId;
+    }
+    // അല്ലെങ്കിൽ ആ കാർട്ട് ഐറ്റം തന്നെ പ്രൊഡക്റ്റ് ആയി ഉപയോഗിക്കുക
+    return item;
+  };
+
+  const [product, setProduct] = useState(getInitialProduct());
   const [loading, setLoading] = useState(!product);
   const [error, setError] = useState(null);
 
@@ -26,18 +39,20 @@ const ProductDetail = () => {
         const data = await response.json();
         setProduct(data);
       } catch (err) {
-        if (!location.state?.product) setError(err.message);
+        // ഡാറ്റ കൈയ്യിൽ ഉണ്ടെങ്കിൽ വെറുതെ എറർ കാണിക്കേണ്ട
+        if (!product?.title) setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (!product || (product._id !== id && product.id !== id)) {
+    const currentId = product?._id || product?.id || product?.productId;
+    if (!product || String(currentId) !== String(id)) {
       fetchProduct();
     } else {
       setLoading(false);
     }
-  }, [id, product, location.state]);
+  }, [id, location.state]);
 
   if (loading)
     return (
@@ -46,7 +61,7 @@ const ProductDetail = () => {
       </div>
     );
 
-  if (error || !product)
+  if (error && !product?.title)
     return (
       <div className="h-screen flex flex-col items-center justify-center text-white bg-[#0a0a0a]">
         <h1 className="text-4xl font-black mb-4">Product Not Found!</h1>
@@ -56,25 +71,48 @@ const ProductDetail = () => {
       </div>
     );
 
+  // 🟢 IMAGE FIX
   const getProductImage = (prod) => {
-    if (prod.displayImage) return prod.displayImage;
-    const img = prod.img || prod.bottleImage;
+    if (!prod) return "/placeholder.png";
+
+    const img = prod.img || prod.bottleImage || prod.displayImage;
+    const title = (prod.title || "").toLowerCase();
+
+    // ഹാർഡ്‌കോഡ് ചെയ്ത ബാക്കപ്പുകൾ
+    if (title.includes("sprite")) return "https://m.media-amazon.com/images/I/51v8nyxSOYL._SL1500_.jpg";
+    if (title.includes("fanta")) return "https://m.media-amazon.com/images/I/61b7l5x0YcL._SL1500_.jpg";
+    if (title.includes("welch")) return "https://m.media-amazon.com/images/I/81I-u8sI+ML._SL1500_.jpg";
+
     if (!img) return "/placeholder.png";
-    if (img.startsWith("http") || img.startsWith("data:")) return img;
-    if (img.startsWith("/")) return `${API_BASE_URL}${img}`;
-    return `${API_BASE_URL}/uploads/${img}`;
+
+    let imageUrl = typeof img === "string" ? img : String(img);
+
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("data:")) {
+      return imageUrl.replace("http://", "https://");
+    }
+
+    if (imageUrl.includes("uploads/")) {
+      const cleanPath = imageUrl.replace(/^\//, "");
+      return `${API_BASE_URL}/${cleanPath}`;
+    }
+
+    if (!imageUrl.startsWith("/drinks/")) {
+      return `/drinks/${imageUrl}`;
+    }
+
+    return imageUrl;
   };
 
-  const productPrice = Number(product.price) || 99; // 💡 വില കൃത്യമായി Number ആണെന്ന് ഉറപ്പുവരുത്തുന്നു
+  const productTitle = product?.title || "Premium Drink";
+  const productPrice = Number(product?.price) || 99;
   const productImage = getProductImage(product);
-  const bgColor = product.bgColor || "#22c55e";
+  const bgColor = product?.bgColor || "#22c55e";
 
   const handleIncrease = () => setQuantity((prev) => prev + 1);
   const handleDecrease = () => {
     if (quantity > 1) setQuantity((prev) => prev - 1);
   };
 
-  // 🟢 ADD TO CART (Payload Fix)
   const handleAddToCart = async (showAlert = true) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -84,32 +122,27 @@ const ProductDetail = () => {
     }
 
     try {
-      // 💡 ID കൃത്യമായി എടുക്കുന്നു (MongoDB യുടേതാണെന്ന് ഉറപ്പാക്കുന്നു)
-      const productId = product._id || product.id || id;
-      const imagePath = product.img || product.bottleImage || product.displayImage || "";
-      const title = product.title || "Premium Drink";
+      const productId = product?._id || product?.id || product?.productId || id;
+      const imagePath = product?.img || product?.bottleImage || product?.displayImage || "";
 
       const payload = {
         productId: productId,
         quantity: quantity,
         price: productPrice,
-        title: title,
+        title: productTitle,
         img: imagePath,
         bgColor: bgColor,
       };
-
-      console.log("Sending payload to cart:", payload); // എന്ത് ഡാറ്റയാണ് പോകുന്നത് എന്ന് കൺസോളിൽ കാണാൻ
 
       await axios.post(`${API_BASE_URL}/api/cart`, payload, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
-      if (showAlert) alert(`${title} added to Cart! 🛒`);
+      if (showAlert) alert(`${productTitle} added to Cart! 🛒`);
     } catch (err) {
       console.error("Cart Error:", err);
-      // ബാക്കെൻഡിൽ നിന്നുള്ള യഥാർത്ഥ എറർ മെസ്സേജ് കാണിക്കാൻ
-      alert(err.response?.data?.message || "Failed to add to cart. Make sure this product is in the database.");
+      alert(err.response?.data?.message || "Failed to add to cart.");
     }
   };
 
@@ -120,7 +153,7 @@ const ProductDetail = () => {
       return;
     }
     try {
-      const productId = product._id || product.id || id;
+      const productId = product?._id || product?.id || product?.productId || id;
       await axios.post(
         `${API_BASE_URL}/api/wishlist`,
         { productId },
@@ -149,7 +182,10 @@ const ProductDetail = () => {
           <div className="absolute w-48 h-48 blur-[60px] rounded-full opacity-30" style={{ backgroundColor: bgColor }} />
           <img
             src={productImage}
-            alt={product.title}
+            alt={productTitle}
+            onError={(e) => {
+              e.target.src = "/placeholder.png";
+            }}
             className="h-[400px] md:h-[550px] object-contain drop-shadow-2xl z-10"
           />
         </motion.div>
@@ -157,14 +193,14 @@ const ProductDetail = () => {
         <motion.div className="space-y-8">
           <div>
             <span className="font-black uppercase text-xs tracking-[0.3em] block" style={{ color: bgColor }}>
-              {product.tagline || "Pure Refreshment"}
+              {product?.tagline || "Pure Refreshment"}
             </span>
-            <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter">{product.title || "Flavor"}</h1>
-            <h3 className="text-xl md:text-2xl font-bold text-gray-400 italic">{product.subtitle || "Premium Drink"}</h3>
+            <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter">{productTitle}</h1>
+            <h3 className="text-xl md:text-2xl font-bold text-gray-400 italic">{product?.subtitle || "Premium Drink"}</h3>
           </div>
 
           <p className="text-gray-400 text-lg max-w-md">
-            {product.description || "Experience the intense burst of refreshment."}
+            {product?.description || "Experience the intense burst of refreshment."}
           </p>
 
           <div className="flex flex-wrap items-end gap-12 pt-4">

@@ -29,7 +29,7 @@ const Login = () => {
       const data = response.data;
 
       if (data.success) {
-        // 🟢 ഇവിടെയാണ് പ്രധാന മാറ്റം: ടോക്കണും യൂസർ ഡാറ്റയും ലോക്കൽ സ്റ്റോറേജിൽ സേവ് ചെയ്യുന്നു
+        // 🟢 ടോക്കണും യൂസർ ഡാറ്റയും ലോക്കൽ സ്റ്റോറേജിൽ സേവ് ചെയ്യുന്നു
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
