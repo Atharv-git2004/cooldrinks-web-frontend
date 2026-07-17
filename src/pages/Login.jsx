@@ -30,10 +30,14 @@ const Login = () => {
 
       if (data.success) {
         // 🟢 ടോക്കണും യൂസർ ഡാറ്റയും ലോക്കൽ സ്റ്റോറേജിൽ സേവ് ചെയ്യുന്നു
-        localStorage.setItem("token", data.token);
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        login(data.user); // AuthContext-ലേക്ക് യൂസറെ സേവ് ചെയ്യുന്നു
+        // 💡 ഇവിടെ ടോക്കൺ കൂടി AuthContext-ലേക്ക് പാസ്സ് ചെയ്യുന്നു
+        login(data.user, data.token);
+
         setStatus({ type: "success", message: "Energy Synchronized!" });
 
         setTimeout(() => {
