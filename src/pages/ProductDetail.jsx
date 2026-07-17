@@ -116,9 +116,9 @@ const ProductDetail = () => {
   const handleAddToCart = async (showAlert = true) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Please login!");
+      alert("Please login first!");
       navigate("/login");
-      return;
+      return false; // 💡 ഇത് നൽകിയാൽ മാത്രമേ ലോഗിൻ ഇല്ലാതെ ഓർഡർ നൗ വർക്ക് ആകാതിരിക്കൂ
     }
 
     try {
@@ -140,15 +140,18 @@ const ProductDetail = () => {
       });
 
       if (showAlert) alert(`${productTitle} added to Cart! 🛒`);
+      return true; // 💡 കാർട്ടിൽ ആഡ് ആയാൽ true റിട്ടേൺ ചെയ്യും
     } catch (err) {
       console.error("Cart Error:", err);
       alert(err.response?.data?.message || "Failed to add to cart.");
+      return false;
     }
   };
 
   const handleWishlist = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
+      alert("Please login first!");
       navigate("/login");
       return;
     }
@@ -233,9 +236,12 @@ const ProductDetail = () => {
               <FiShoppingCart /> Add to Cart
             </button>
             <button
-              onClick={() => {
-                handleAddToCart(false);
-                navigate("/checkout");
+              onClick={async () => {
+                // 💡 FIX: ലോഗിൻ ഉണ്ടെങ്കിൽ മാത്രമേ checkout-ലേക്ക് പോകൂ
+                const success = await handleAddToCart(false);
+                if (success) {
+                  navigate("/checkout");
+                }
               }}
               className="flex-1 border-2 border-white text-white font-black py-4 px-6 rounded-[2rem] uppercase tracking-widest hover:bg-white hover:text-black transition-colors"
             >

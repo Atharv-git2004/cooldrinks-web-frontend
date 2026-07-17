@@ -117,21 +117,38 @@ const Flavors = () => {
     navigate(`/product/${item.id}`, { state: { product: productWithImage } });
   };
 
-  // 🟢 ടോഗിൾ വിഷ്‌ലിസ്റ്റ് ഫംഗ്ഷൻ (API കാളും കുക്കികളും ഉൾപ്പെടുത്തിയിരിക്കുന്നു)
+  // 💡 FIX 1: ലോഗിൻ ചെയ്യാത്തവർ ഓർഡർ നൗ ക്ലിക്ക് ചെയ്യുമ്പോൾ തടയുന്നു
+  const handleOrderNow = (item) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first!");
+      navigate("/login");
+      return;
+    }
+    navigate("/checkout", { state: { product: item, productId: item.id } });
+  };
+
+  // 💡 FIX 2: ടോഗിൾ വിഷ്‌ലിസ്റ്റ് ഫംഗ്ഷൻ (ലോഗിൻ ചെക്കിംഗ് ഉൾപ്പെടുത്തി)
   const handleToggleWishlist = async (e, item) => {
     e.stopPropagation();
+
+    // ലോഗിൻ ടോക്കൺ ഉണ്ടോ എന്ന് ആദ്യം തന്നെ ചെക്ക് ചെയ്യുന്നു
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first!");
+      navigate("/login");
+      return; // ലോഗിൻ ഇല്ലാത്തവർക്ക് ഇവിടെവെച്ച് ഫംഗ്ഷൻ നിർത്തുന്നു
+    }
+
     setLoadingItems((prev) => ({ ...prev, [item.id]: true }));
 
     const imagePath = getProductImageSrc(item);
     const existingWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
     const isAlreadyWishlisted = existingWishlist.find((i) => i.id === item.id);
-
-    // നിങ്ങളുടെ ലോഗിൻ ടോക്കൺ എടുക്കുന്നു (ഉണ്ടെങ്കിൽ)
-    const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
 
     const config = {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { Authorization: `Bearer ${token}` },
       withCredentials: true,
     };
 
@@ -306,7 +323,7 @@ const Flavors = () => {
                     View Details <FiArrowRight />
                   </button>
                   <button
-                    onClick={() => navigate("/checkout", { state: { product: item, productId: item.id } })}
+                    onClick={() => handleOrderNow(item)}
                     className="w-full py-3.5 md:py-5 rounded-full bg-green-500 text-black font-black uppercase text-[9px] md:text-[11px] tracking-[0.2em] hover:bg-green-400 transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     Order Now <FiShoppingCart />

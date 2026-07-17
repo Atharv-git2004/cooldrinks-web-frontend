@@ -41,10 +41,10 @@ const Navbar = () => {
         withCredentials: true,
       };
 
-      // 🟢 http://localhost:5000 മാറ്റി വെറും റൂട്ടുകൾ മാത്രം നൽകുന്നു
+      // 🟢 API URL പൂർണ്ണമായി നൽകുന്നു (CORS/404 എററുകൾ ഒഴിവാക്കാൻ)
       const [cartRes, wishlistRes] = await Promise.all([
-        axios.get("/api/cart", config),
-        axios.get("/api/wishlist", config),
+        axios.get("https://cooldrinkbackend.onrender.com/api/cart", config),
+        axios.get("https://cooldrinkbackend.onrender.com/api/wishlist", config),
       ]);
 
       // 🟢 ഡാറ്റ ഒബ്ജക്റ്റ് ആണെങ്കിലും അറേ ആണെങ്കിലും സുരക്ഷിതമായി നീളം (length) എടുക്കുന്നു
