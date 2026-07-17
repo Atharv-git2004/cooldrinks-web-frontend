@@ -24,11 +24,18 @@ const Flavors = () => {
   const [loadingItems, setLoadingItems] = useState({});
   const [wishlistedItems, setWishlistedItems] = useState([]);
 
-  // Wishlist ലോക്കൽ സ്റ്റോറേജിൽ നിന്ന് എടുക്കുന്നു
+  // ലോഗിൻ ചെയ്തിട്ടുണ്ടോ എന്ന് ചെക്ക് ചെയ്യാൻ ടോക്കൺ ഉപയോഗിക്കുന്നു
+  const isLoggedIn = !!localStorage.getItem("token");
+
+  // Wishlist ലോക്കൽ സ്റ്റോറേജിൽ നിന്ന് എടുക്കുന്നു (ലോഗിൻ ചെയ്തിട്ടുണ്ടെങ്കിൽ മാത്രം)
   useEffect(() => {
-    const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    setWishlistedItems(savedWishlist.map((item) => item.id));
-  }, []);
+    if (isLoggedIn) {
+      const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+      setWishlistedItems(savedWishlist.map((item) => item.id));
+    } else {
+      setWishlistedItems([]); // ലോഗിൻ ചെയ്തിട്ടില്ലെങ്കിൽ വിഷ്‌ലിസ്റ്റ് കാലിയാക്കുന്നു
+    }
+  }, [isLoggedIn]);
 
   // ബാക്കെൻഡിൽ നിന്നും പുതിയ പ്രോഡക്റ്റുകൾ ഫെച്ച് ചെയ്ത് പഴയതിനൊപ്പം ചേർക്കുന്നു
   useEffect(() => {
@@ -117,10 +124,9 @@ const Flavors = () => {
     navigate(`/product/${item.id}`, { state: { product: productWithImage } });
   };
 
-  // 💡 FIX 1: ലോഗിൻ ചെയ്യാത്തവർ ഓർഡർ നൗ ക്ലിക്ക് ചെയ്യുമ്പോൾ തടയുന്നു
+  // ലോഗിൻ ചെയ്യാത്തവർ ഓർഡർ നൗ ക്ലിക്ക് ചെയ്യുമ്പോൾ തടയുന്നു
   const handleOrderNow = (item) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!isLoggedIn) {
       alert("Please login first!");
       navigate("/login");
       return;
@@ -128,7 +134,7 @@ const Flavors = () => {
     navigate("/checkout", { state: { product: item, productId: item.id } });
   };
 
-  // 💡 FIX 2: ടോഗിൾ വിഷ്‌ലിസ്റ്റ് ഫംഗ്ഷൻ (ലോഗിൻ ചെക്കിംഗ് ഉൾപ്പെടുത്തി)
+  // ടോഗിൾ വിഷ്‌ലിസ്റ്റ് ഫംഗ്ഷൻ (ലോഗിൻ ചെക്കിംഗ് ഉൾപ്പെടുത്തി)
   const handleToggleWishlist = async (e, item) => {
     e.stopPropagation();
 
@@ -260,7 +266,8 @@ const Flavors = () => {
         >
           {products.map((item) => {
             const itemColor = item.bgColor || "#22c55e";
-            const isWishlisted = wishlistedItems.includes(item.id);
+            // 💡 ഇവിടെയാണ് മെയിൻ മാറ്റം: ലോഗിൻ ചെയ്തിട്ടുണ്ടെങ്കിൽ മാത്രം വിഷ്‌ലിസ്റ്റ് കളർ കാണിക്കുന്നു
+            const isWishlisted = isLoggedIn && wishlistedItems.includes(item.id);
 
             return (
               <motion.div
