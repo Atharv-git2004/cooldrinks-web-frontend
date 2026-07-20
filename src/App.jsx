@@ -29,7 +29,7 @@ import ManageProducts from "./admin/ManageProducts";
 import HomeManager from "./admin/HomeManager";
 import ManageOrders from "./admin/ManageOrders";
 
-// 🟢 Axios Global Configuration
+// 🟢 Axios Global Configuration (Render Backend URL)
 axios.defaults.baseURL = "https://cooldrinkbackend.onrender.com";
 axios.defaults.withCredentials = true;
 
@@ -69,7 +69,7 @@ function App() {
   const location = useLocation();
   const { login } = useAuth();
 
-  // Restore session on page refresh
+  // Restore session on page refresh (Manual & Google Auth support)
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
@@ -91,25 +91,130 @@ function App() {
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             {/* --- USER & AUTH ROUTES --- */}
-            <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
-            <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
-            <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
-            <Route path="/flavors" element={<PageWrapper><Flavors /></PageWrapper>} />
-            <Route path="/product/:id" element={<PageWrapper><ProductDetail /></PageWrapper>} />
-            <Route path="/cart" element={<PageWrapper><Cart /></PageWrapper>} />
-            <Route path="/wishlist" element={<PageWrapper><Wishlist /></PageWrapper>} />
-            <Route path="/checkout" element={<PageWrapper><Checkout /></PageWrapper>} />
-            <Route path="/orders" element={<PageWrapper><Orders /></PageWrapper>} />
-            <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
+            <Route
+              path="/"
+              element={
+                <PageWrapper>
+                  <Home />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <PageWrapper>
+                  <Login />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PageWrapper>
+                  <Register />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/flavors"
+              element={
+                <PageWrapper>
+                  <Flavors />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/product/:id"
+              element={
+                <PageWrapper>
+                  <ProductDetail />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/cart"
+              element={
+                <PageWrapper>
+                  <Cart />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/wishlist"
+              element={
+                <PageWrapper>
+                  <Wishlist />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <PageWrapper>
+                  <Checkout />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <PageWrapper>
+                  <Orders />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <PageWrapper>
+                  <About />
+                </PageWrapper>
+              }
+            />
 
             {/* --- ADMIN ROUTES (Protected) --- */}
             <Route path="/admin" element={<ProtectedRoute />}>
               <Route element={<AdminLayout />}>
-                <Route index element={<PageWrapper><AdminDashboard /></PageWrapper>} />
-                <Route path="add" element={<PageWrapper><AddProduct /></PageWrapper>} />
-                <Route path="manage" element={<PageWrapper><ManageProducts /></PageWrapper>} />
-                <Route path="home" element={<PageWrapper><HomeManager /></PageWrapper>} />
-                <Route path="orders" element={<PageWrapper><ManageOrders /></PageWrapper>} />
+                <Route
+                  index
+                  element={
+                    <PageWrapper>
+                      <AdminDashboard />
+                    </PageWrapper>
+                  }
+                />
+                <Route
+                  path="add"
+                  element={
+                    <PageWrapper>
+                      <AddProduct />
+                    </PageWrapper>
+                  }
+                />
+                <Route
+                  path="manage"
+                  element={
+                    <PageWrapper>
+                      <ManageProducts />
+                    </PageWrapper>
+                  }
+                />
+                <Route
+                  path="home"
+                  element={
+                    <PageWrapper>
+                      <HomeManager />
+                    </PageWrapper>
+                  }
+                />
+                <Route
+                  path="orders"
+                  element={
+                    <PageWrapper>
+                      <ManageOrders />
+                    </PageWrapper>
+                  }
+                />
               </Route>
             </Route>
 
