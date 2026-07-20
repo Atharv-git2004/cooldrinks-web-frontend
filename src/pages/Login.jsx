@@ -29,13 +29,11 @@ const Login = () => {
       const data = response.data;
 
       if (data.success) {
-        // 🟢 ടോക്കണും യൂസർ ഡാറ്റയും ലോക്കൽ സ്റ്റോറേജിൽ സേവ് ചെയ്യുന്നു
         if (data.token) {
           localStorage.setItem("token", data.token);
         }
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // 💡 ഇവിടെ ടോക്കൺ കൂടി AuthContext-ലേക്ക് പാസ്സ് ചെയ്യുന്നു
         login(data.user, data.token);
 
         setStatus({ type: "success", message: "Energy Synchronized!" });
@@ -53,6 +51,7 @@ const Login = () => {
     }
   };
 
+  // Google Login Handle - ഇത് നേരെ Render ബാക്കെൻഡിലേക്ക് പോകും
   const handleGoogleLogin = () => {
     window.location.href = "https://cooldrinkbackend.onrender.com/api/users/google";
   };
