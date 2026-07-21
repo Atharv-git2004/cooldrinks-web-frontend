@@ -71,12 +71,36 @@ function App() {
 
   // Restore session on page refresh (Manual & Google Auth support)
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
+    // 🟢 URL-ൽ നിന്നും token ഉം user ഡാറ്റയും എടുക്കാൻ
+    const queryParams = new URLSearchParams(window.location.search);
+    const urlToken = queryParams.get("token");
+    const urlUser = queryParams.get("user");
 
-    if (savedToken && savedUser) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
-      login(JSON.parse(savedUser));
+    if (urlToken && urlUser) {
+      try {
+        // ഗൂഗിൾ ലോഗിൻ വഴി വന്നതാണെങ്കിൽ
+        const parsedUser = JSON.parse(decodeURIComponent(urlUser));
+
+        localStorage.setItem("token", urlToken);
+        localStorage.setItem("user", JSON.stringify(parsedUser));
+
+        axios.defaults.headers.common["Authorization"] = `Bearer ${urlToken}`;
+        login(parsedUser);
+
+        // 🟢 URL ക്ലീൻ ചെയ്യാൻ (token കാണിക്കാതിരിക്കാൻ)
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (error) {
+        console.error("Error parsing user data from URL:", error);
+      }
+    } else {
+      // 🟢 മാനുവൽ ലോഗിൻ വഴിയോ നേരത്തെ ലോഗിൻ ചെയ്തതോ ആണെങ്കിൽ (localStorage check)
+      const savedToken = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
+
+      if (savedToken && savedUser) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
+        login(JSON.parse(savedUser));
+      }
     }
   }, [login]);
 
