@@ -199,12 +199,12 @@ const Navbar = () => {
                     </span>
                   </div>
 
-                  {/* അപ്ഡേറ്റ് ചെയ്ത ഇമേജ് ഡിസ്പ്ലേ സെക്ഷൻ */}
                   <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-green-400 bg-gray-800 flex items-center justify-center cursor-pointer">
                     {user.image || user.avatar || user.profilePicture || user.photoURL ? (
                       <img
                         src={user.image || user.avatar || user.profilePicture || user.photoURL}
                         alt="Profile"
+                        referrerPolicy="no-referrer" /* 🟢 CRITICAL FIX: ഗൂഗിൾ ഇമേജുകൾ ബ്ലോക്ക് ആവാതിരിക്കാൻ */
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
